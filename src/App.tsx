@@ -75,7 +75,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
-      <DonationBox position="bottom-right" donationUrl="https://ko-fi.com" />
+      <DonationBox position="bottom-right" donationUrl="https://ko-fi.com/oscarbrimelow" />
     </div>
   );
 }
