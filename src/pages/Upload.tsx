@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Upload as UploadIcon, X, Eye, Video } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { isDemoMode } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -304,8 +305,9 @@ export default function Upload({ user }: UploadProps) {
       return;
     }
 
-    if (formData.versions.length === 0) {
-      alert('Please add at least one version.');
+    // Only require versions if Java is selected
+    if (formData.platform.includes('Java') && formData.versions.length === 0) {
+      alert('Please add at least one version for Java.');
       return;
     }
 
@@ -316,14 +318,24 @@ export default function Upload({ user }: UploadProps) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
 
-      const farmData = {
-        ...formData,
-        slug,
+      const farmData: any = {
+        title: formData.title,
+        description: formData.description,
+        platform: formData.platform,
+        versions: formData.versions.length > 0 ? formData.versions : [],
+        video_url: formData.video_url || null,
         materials: formData.materials,
         optional_materials: formData.optional_materials,
         images,
         preview_image: images[0] || null,
+        tags: formData.tags,
         estimated_time: formData.estimated_time ? parseInt(formData.estimated_time) : null,
+        chunk_requirements: formData.chunk_requirements || null,
+        height_requirements: formData.height_requirements || null,
+        notes: formData.notes || null,
+        farm_designer: formData.farm_designer || null,
+        public: formData.public,
+        slug,
         ...(editId ? {} : { author_id: user?.id, upvotes_count: 0 }),
       };
 
@@ -346,9 +358,10 @@ export default function Upload({ user }: UploadProps) {
         if (error) throw error;
         navigate('/farms');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving farm:', error);
-      alert('Failed to save farm. Please try again.');
+      const errorMessage = error?.message || error?.error_description || 'Failed to save farm. Please try again.';
+      alert(`Error: ${errorMessage}`);
     } finally {
       setUploading(false);
     }
@@ -446,87 +459,99 @@ export default function Upload({ user }: UploadProps) {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <label className="block font-semibold mb-2">Versions *</label>
-                  <div className="flex items-center gap-4 mb-3">
-                    <label className="flex items-center space-x-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.versions.length === COMMON_VERSIONS.length && 
-                                 COMMON_VERSIONS.every(v => formData.versions.includes(v))}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            handleSelectAllVersions();
-                          } else {
-                            setFormData(prev => ({ ...prev, versions: [] }));
-                          }
-                        }}
-                        className="w-4 h-4 text-minecraft-green rounded focus:ring-minecraft-green"
-                      />
-                      <span className="text-sm font-medium">Select All Available Versions</span>
-                    </label>
-                  </div>
-                  <div className="flex gap-2 mb-3">
-                    <input
-                      type="text"
-                      value={newVersion}
-                      onChange={(e) => setNewVersion(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddVersion()}
-                      placeholder="e.g., 1.20.1 (or select from list below)"
-                      className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddVersion}
-                      className="px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark"
+                <AnimatePresence>
+                  {formData.platform.includes('Java') && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      style={{ overflow: 'hidden' }}
                     >
-                      Add
-                    </button>
-                  </div>
-                  
-                  {/* Version Selection Grid */}
-                  <div className="mb-3 p-4 bg-gray-50 rounded-lg border-2 border-gray-200 max-h-48 overflow-y-auto">
-                    <p className="text-xs text-gray-600 mb-2 font-semibold">Quick Select Common Versions:</p>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                      {COMMON_VERSIONS.map((version) => (
-                        <label
-                          key={version}
-                          className="flex items-center space-x-1 cursor-pointer hover:bg-gray-200 p-1 rounded text-sm"
-                        >
+                      <div>
+                        <label className="block font-semibold mb-2">Java Versions *</label>
+                        <div className="flex items-center gap-4 mb-3">
+                          <label className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.versions.length === COMMON_VERSIONS.length && 
+                                       COMMON_VERSIONS.every(v => formData.versions.includes(v))}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  handleSelectAllVersions();
+                                } else {
+                                  setFormData(prev => ({ ...prev, versions: [] }));
+                                }
+                              }}
+                              className="w-4 h-4 text-minecraft-green rounded focus:ring-minecraft-green"
+                            />
+                            <span className="text-sm font-medium">Select All Available Versions</span>
+                          </label>
+                        </div>
+                        <div className="flex gap-2 mb-3">
                           <input
-                            type="checkbox"
-                            checked={formData.versions.includes(version)}
-                            onChange={() => handleToggleVersion(version)}
-                            className="w-3 h-3 text-minecraft-green rounded focus:ring-minecraft-green"
+                            type="text"
+                            value={newVersion}
+                            onChange={(e) => setNewVersion(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddVersion()}
+                            placeholder="e.g., 1.20.1 (or select from list below)"
+                            className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                           />
-                          <span>{version}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                          <button
+                            type="button"
+                            onClick={handleAddVersion}
+                            className="px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark"
+                          >
+                            Add
+                          </button>
+                        </div>
+                        
+                        {/* Version Selection Grid */}
+                        <div className="mb-3 p-4 bg-gray-50 rounded-lg border-2 border-gray-200 max-h-48 overflow-y-auto">
+                          <p className="text-xs text-gray-600 mb-2 font-semibold">Quick Select Common Versions:</p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                            {COMMON_VERSIONS.map((version) => (
+                              <label
+                                key={version}
+                                className="flex items-center space-x-1 cursor-pointer hover:bg-gray-200 p-1 rounded text-sm"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={formData.versions.includes(version)}
+                                  onChange={() => handleToggleVersion(version)}
+                                  className="w-3 h-3 text-minecraft-green rounded focus:ring-minecraft-green"
+                                />
+                                <span>{version}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
 
-                  {/* Selected Versions Display */}
-                  <div className="flex flex-wrap gap-2">
-                    {formData.versions.map((version) => (
-                      <span
-                        key={version}
-                        className="inline-flex items-center space-x-2 px-3 py-1 bg-gray-700 text-white rounded-full text-sm"
-                      >
-                        <span>{version}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveVersion(version)}
-                          className="hover:text-red-300"
-                        >
-                          <X size={14} />
-                        </button>
-                      </span>
-                    ))}
-                    {formData.versions.length === 0 && (
-                      <span className="text-sm text-gray-500">No versions selected</span>
-                    )}
-                  </div>
-                </div>
+                        {/* Selected Versions Display */}
+                        <div className="flex flex-wrap gap-2">
+                          {formData.versions.map((version) => (
+                            <span
+                              key={version}
+                              className="inline-flex items-center space-x-2 px-3 py-1 bg-gray-700 text-white rounded-full text-sm"
+                            >
+                              <span>{version}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVersion(version)}
+                                className="hover:text-red-300"
+                              >
+                                <X size={14} />
+                              </button>
+                            </span>
+                          ))}
+                          {formData.versions.length === 0 && (
+                            <span className="text-sm text-gray-500">No versions selected</span>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
