@@ -54,6 +54,7 @@ export const mockFarms = [
     },
     author_id: 'demo-user',
     public: true,
+    category: 'Sugar Cane Farm',
   },
   {
     id: 'demo-2',
@@ -88,6 +89,7 @@ export const mockFarms = [
     },
     author_id: 'demo-user-2',
     public: true,
+    category: 'Iron Farm',
   },
   {
     id: 'demo-3',
@@ -118,6 +120,7 @@ export const mockFarms = [
     },
     author_id: 'demo-user-3',
     public: true,
+    category: 'Gold Farm',
   },
   {
     id: 'demo-4',
@@ -149,6 +152,7 @@ export const mockFarms = [
     },
     author_id: 'demo-user-4',
     public: true,
+    category: 'Wheat Farm',
   },
   {
     id: 'demo-5',
@@ -179,6 +183,7 @@ export const mockFarms = [
     },
     author_id: 'demo-user-5',
     public: true,
+    category: 'Mob Farm',
   },
   {
     id: 'demo-6',
@@ -211,6 +216,7 @@ export const mockFarms = [
     },
     author_id: 'demo-user-6',
     public: true,
+    category: 'Kelp Farm',
   },
 ];
 

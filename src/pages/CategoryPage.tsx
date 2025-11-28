@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Farm } from 'lucide-react';
+import { ArrowLeft, Grid3x3 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, mockFarms } from '../lib/demoData';
 import { getCategoryFromSlug } from '../lib/farmCategories';
@@ -72,7 +72,7 @@ export default function CategoryPage() {
           </Link>
           <div className="flex items-center space-x-4">
             <div className="p-4 bg-minecraft-green rounded-xl">
-              <Farm className="text-white" size={32} />
+              <Grid3x3 className="text-white" size={32} />
             </div>
             <div>
               <h1 className="text-4xl md:text-5xl font-display font-bold text-gray-900">
@@ -101,7 +101,7 @@ export default function CategoryPage() {
                 animate={{ opacity: 1 }}
                 className="text-center py-20"
               >
-                <Farm className="mx-auto text-gray-400 mb-4" size={64} />
+                <Grid3x3 className="mx-auto text-gray-400 mb-4" size={64} />
                 <h2 className="text-2xl font-display text-gray-700 mb-2">
                   No farms found
                 </h2>
