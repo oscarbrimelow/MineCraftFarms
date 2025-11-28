@@ -622,7 +622,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
             )}
 
             {/* Additional Info */}
-            {(farm.estimated_time || farm.notes || farm.chunk_requirements || farm.height_requirements) && (
+            {(farm.estimated_time || farm.notes || farm.chunk_requirements || farm.height_requirements || farm.required_biome) && (
               <div className="bg-white rounded-xl shadow-minecraft p-6">
                 <h2 className="text-2xl font-bold mb-4">Additional Information</h2>
                 <div className="space-y-4">
@@ -645,6 +645,12 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                     <div>
                       <div className="font-semibold mb-1">Height Requirements</div>
                       <div className="text-gray-600">{farm.height_requirements}</div>
+                    </div>
+                  )}
+                  {farm.required_biome && (
+                    <div>
+                      <div className="font-semibold mb-1">Required Biome</div>
+                      <div className="text-gray-600">{farm.required_biome}</div>
                     </div>
                   )}
                   {farm.notes && (

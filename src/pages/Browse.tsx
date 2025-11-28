@@ -123,7 +123,23 @@ export default function Browse() {
     if (!searchQuery.trim()) return farms;
 
     const fuse = new Fuse(farms, {
-      keys: ['title', 'description', 'tags', 'materials'],
+      keys: [
+        'title', 
+        'description', 
+        'tags', 
+        'materials',
+        'farmable_items', // Search by items the farm produces
+        {
+          name: 'drop_rate_per_hour',
+          getFn: (farm: any) => {
+            // Extract item names from drop_rate_per_hour array
+            if (Array.isArray(farm.drop_rate_per_hour)) {
+              return farm.drop_rate_per_hour.map((dr: any) => dr.item || '').join(' ');
+            }
+            return '';
+          }
+        }
+      ],
       threshold: 0.3,
     });
 

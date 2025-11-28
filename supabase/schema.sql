@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS farms (
   notes TEXT,
   farm_designer TEXT,
   drop_rate_per_hour JSONB DEFAULT '[]'::jsonb,
-  farmable_items TEXT[] DEFAULT ARRAY[]::TEXT[]
+  farmable_items TEXT[] DEFAULT ARRAY[]::TEXT[],
+  required_biome TEXT
 );
 
 -- Comments table

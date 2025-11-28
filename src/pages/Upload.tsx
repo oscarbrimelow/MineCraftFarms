@@ -53,6 +53,7 @@ export default function Upload({ user }: UploadProps) {
     farm_designer: '',
     drop_rate_per_hour: [] as Array<{ item: string; rate: string }>,
     farmable_items: [] as string[],
+    required_biome: '',
     public: true,
   });
 
@@ -147,6 +148,7 @@ export default function Upload({ user }: UploadProps) {
         farm_designer: data.farm_designer || '',
         drop_rate_per_hour: data.drop_rate_per_hour || [],
         farmable_items: data.farmable_items || [],
+        required_biome: data.required_biome || '',
         public: data.public,
       });
       setImages(data.images || []);
@@ -540,6 +542,7 @@ export default function Upload({ user }: UploadProps) {
         farm_designer: formData.farm_designer || null,
         drop_rate_per_hour: formData.drop_rate_per_hour.length > 0 ? formData.drop_rate_per_hour : null,
         farmable_items: formData.farmable_items.length > 0 ? formData.farmable_items : [],
+        required_biome: formData.required_biome || null,
         public: formData.public,
         slug,
         ...(editId ? {} : { author_id: user?.id, upvotes_count: 0 }),
@@ -850,6 +853,114 @@ export default function Upload({ user }: UploadProps) {
               )}
             </div>
 
+            {/* Farm Outputs */}
+            <div className="bg-white rounded-xl shadow-minecraft p-6">
+              <h2 className="text-2xl font-bold mb-4">Farm Outputs</h2>
+              <div className="space-y-6">
+                {/* Farmable Items */}
+                <div>
+                  <label className="block font-semibold mb-2">Items This Farm Produces</label>
+                  <div className="flex gap-2 mb-2">
+                    <MaterialAutocomplete
+                      value={newFarmableItem}
+                      onChange={(value) => setNewFarmableItem(value)}
+                      placeholder="Search Minecraft items..."
+                      onEnter={() => handleAddFarmableItem()}
+                    />
+                    <button
+                      onClick={handleAddFarmableItem}
+                      className="px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.farmable_items.map((item) => (
+                      <span
+                        key={item}
+                        className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full"
+                      >
+                        <img
+                          src={getMinecraftItemIcon(item)}
+                          alt={item}
+                          className="w-5 h-5 object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                        <span>{item}</span>
+                        <button
+                          onClick={() => handleRemoveFarmableItem(item)}
+                          className="hover:text-red-600"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Drop Rates */}
+                <div>
+                  <label className="block font-semibold mb-2">Drop Rate Per Hour</label>
+                  <p className="text-sm text-gray-600 mb-3">Specify how many items this farm produces per hour</p>
+                  <div className="flex gap-2 mb-2">
+                    <MaterialAutocomplete
+                      value={newDropRate.item}
+                      onChange={(value) => setNewDropRate({ ...newDropRate, item: value })}
+                      placeholder="Item name..."
+                      onEnter={() => {
+                        if (newDropRate.rate.trim()) handleAddDropRate();
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={newDropRate.rate}
+                      onChange={(e) => setNewDropRate({ ...newDropRate, rate: e.target.value })}
+                      placeholder="Rate (e.g., 1000/hour)"
+                      className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddDropRate()}
+                    />
+                    <button
+                      onClick={handleAddDropRate}
+                      className="px-4 py-2 bg-minecraft-gold text-white rounded-lg hover:bg-minecraft-gold-dark"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.drop_rate_per_hour.map((dropRate, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-2 border-green-200"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={getMinecraftItemIcon(dropRate.item)}
+                            alt={dropRate.item}
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                          <div>
+                            <div className="font-semibold">{dropRate.item}</div>
+                            <div className="text-sm text-gray-600">{dropRate.rate}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveDropRate(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Materials */}
             <div className="bg-white rounded-xl shadow-minecraft p-6">
               <h2 className="text-2xl font-bold mb-4">Materials</h2>
@@ -1016,114 +1127,6 @@ export default function Upload({ user }: UploadProps) {
               </div>
             </div>
 
-            {/* Farm Outputs */}
-            <div className="bg-white rounded-xl shadow-minecraft p-6">
-              <h2 className="text-2xl font-bold mb-4">Farm Outputs</h2>
-              <div className="space-y-6">
-                {/* Farmable Items */}
-                <div>
-                  <label className="block font-semibold mb-2">Items This Farm Produces</label>
-                  <div className="flex gap-2 mb-2">
-                    <MaterialAutocomplete
-                      value={newFarmableItem}
-                      onChange={(value) => setNewFarmableItem(value)}
-                      placeholder="Search Minecraft items..."
-                      onEnter={() => handleAddFarmableItem()}
-                    />
-                    <button
-                      onClick={handleAddFarmableItem}
-                      className="px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.farmable_items.map((item) => (
-                      <span
-                        key={item}
-                        className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full"
-                      >
-                        <img
-                          src={getMinecraftItemIcon(item)}
-                          alt={item}
-                          className="w-5 h-5 object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                        <span>{item}</span>
-                        <button
-                          onClick={() => handleRemoveFarmableItem(item)}
-                          className="hover:text-red-600"
-                        >
-                          <X size={14} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Drop Rates */}
-                <div>
-                  <label className="block font-semibold mb-2">Drop Rate Per Hour</label>
-                  <p className="text-sm text-gray-600 mb-3">Specify how many items this farm produces per hour</p>
-                  <div className="flex gap-2 mb-2">
-                    <MaterialAutocomplete
-                      value={newDropRate.item}
-                      onChange={(value) => setNewDropRate({ ...newDropRate, item: value })}
-                      placeholder="Item name..."
-                      onEnter={() => {
-                        if (newDropRate.rate.trim()) handleAddDropRate();
-                      }}
-                    />
-                    <input
-                      type="text"
-                      value={newDropRate.rate}
-                      onChange={(e) => setNewDropRate({ ...newDropRate, rate: e.target.value })}
-                      placeholder="Rate (e.g., 1000/hour)"
-                      className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddDropRate()}
-                    />
-                    <button
-                      onClick={handleAddDropRate}
-                      className="px-4 py-2 bg-minecraft-gold text-white rounded-lg hover:bg-minecraft-gold-dark"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {formData.drop_rate_per_hour.map((dropRate, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-2 border-green-200"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src={getMinecraftItemIcon(dropRate.item)}
-                            alt={dropRate.item}
-                            className="w-8 h-8 object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                          <div>
-                            <div className="font-semibold">{dropRate.item}</div>
-                            <div className="text-sm text-gray-600">{dropRate.rate}</div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleRemoveDropRate(index)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <X size={18} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Additional Info */}
             <div className="bg-white rounded-xl shadow-minecraft p-6">
               <h2 className="text-2xl font-bold mb-4">Additional Information</h2>
@@ -1154,6 +1157,16 @@ export default function Upload({ user }: UploadProps) {
                     value={formData.height_requirements}
                     onChange={(e) => setFormData({ ...formData, height_requirements: e.target.value })}
                     placeholder="e.g., Build at Y level 60-80"
+                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-2">Required Biome (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.required_biome}
+                    onChange={(e) => setFormData({ ...formData, required_biome: e.target.value })}
+                    placeholder="e.g., Plains, Desert, Ocean, etc."
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                   />
                 </div>
