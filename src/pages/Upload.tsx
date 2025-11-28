@@ -11,6 +11,21 @@ interface UploadProps {
 }
 
 const PLATFORMS = ['Java', 'Bedrock', 'Xbox', 'PlayStation', 'Switch', 'Mobile'];
+const COMMON_VERSIONS = [
+  '1.21', '1.20.6', '1.20.5', '1.20.4', '1.20.3', '1.20.2', '1.20.1', '1.20',
+  '1.19.4', '1.19.3', '1.19.2', '1.19.1', '1.19',
+  '1.18.2', '1.18.1', '1.18',
+  '1.17.1', '1.17',
+  '1.16.5', '1.16.4', '1.16.3', '1.16.2', '1.16.1', '1.16',
+  '1.15.2', '1.15.1', '1.15',
+  '1.14.4', '1.14.3', '1.14.2', '1.14.1', '1.14',
+  '1.13.2', '1.13.1', '1.13',
+  '1.12.2', '1.12.1', '1.12',
+  '1.11.2', '1.11.1', '1.11',
+  '1.10.2', '1.10.1', '1.10',
+  '1.9.4', '1.9.3', '1.9.2', '1.9.1', '1.9',
+  '1.8.9', '1.8.8', '1.8.7', '1.8.6', '1.8.5', '1.8.4', '1.8.3', '1.8.2', '1.8.1', '1.8',
+];
 const COMMON_MATERIALS = [
   'Redstone Dust', 'Redstone Repeater', 'Redstone Comparator', 'Hopper', 'Chest',
   'Observer', 'Piston', 'Sticky Piston', 'Slime Block', 'Iron Block',
@@ -36,6 +51,7 @@ export default function Upload({ user }: UploadProps) {
     chunk_requirements: '',
     height_requirements: '',
     notes: '',
+    farm_designer: '',
     public: true,
   });
 
@@ -122,6 +138,7 @@ export default function Upload({ user }: UploadProps) {
         chunk_requirements: data.chunk_requirements || '',
         height_requirements: data.height_requirements || '',
         notes: data.notes || '',
+        farm_designer: data.farm_designer || '',
         public: data.public,
       });
       setImages(data.images || []);
@@ -148,6 +165,29 @@ export default function Upload({ user }: UploadProps) {
       }));
       setNewVersion('');
     }
+  };
+
+  const handleSelectAllVersions = () => {
+    setFormData((prev) => ({
+      ...prev,
+      versions: COMMON_VERSIONS.slice(),
+    }));
+  };
+
+  const handleToggleVersion = (version: string) => {
+    setFormData((prev) => {
+      if (prev.versions.includes(version)) {
+        return {
+          ...prev,
+          versions: prev.versions.filter((v) => v !== version),
+        };
+      } else {
+        return {
+          ...prev,
+          versions: [...prev.versions, version],
+        };
+      }
+    });
   };
 
   const handleRemoveVersion = (version: string) => {
@@ -408,30 +448,73 @@ export default function Upload({ user }: UploadProps) {
                 </div>
                 <div>
                   <label className="block font-semibold mb-2">Versions *</label>
-                  <div className="flex gap-2 mb-2">
+                  <div className="flex items-center gap-4 mb-3">
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.versions.length === COMMON_VERSIONS.length && 
+                                 COMMON_VERSIONS.every(v => formData.versions.includes(v))}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleSelectAllVersions();
+                          } else {
+                            setFormData(prev => ({ ...prev, versions: [] }));
+                          }
+                        }}
+                        className="w-4 h-4 text-minecraft-green rounded focus:ring-minecraft-green"
+                      />
+                      <span className="text-sm font-medium">Select All Available Versions</span>
+                    </label>
+                  </div>
+                  <div className="flex gap-2 mb-3">
                     <input
                       type="text"
                       value={newVersion}
                       onChange={(e) => setNewVersion(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddVersion()}
-                      placeholder="e.g., Java 1.21.1"
+                      placeholder="e.g., 1.20.1 (or select from list below)"
                       className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                     />
                     <button
+                      type="button"
                       onClick={handleAddVersion}
                       className="px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark"
                     >
                       Add
                     </button>
                   </div>
+                  
+                  {/* Version Selection Grid */}
+                  <div className="mb-3 p-4 bg-gray-50 rounded-lg border-2 border-gray-200 max-h-48 overflow-y-auto">
+                    <p className="text-xs text-gray-600 mb-2 font-semibold">Quick Select Common Versions:</p>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                      {COMMON_VERSIONS.map((version) => (
+                        <label
+                          key={version}
+                          className="flex items-center space-x-1 cursor-pointer hover:bg-gray-200 p-1 rounded text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.versions.includes(version)}
+                            onChange={() => handleToggleVersion(version)}
+                            className="w-3 h-3 text-minecraft-green rounded focus:ring-minecraft-green"
+                          />
+                          <span>{version}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Selected Versions Display */}
                   <div className="flex flex-wrap gap-2">
                     {formData.versions.map((version) => (
                       <span
                         key={version}
-                        className="inline-flex items-center space-x-2 px-3 py-1 bg-gray-700 text-white rounded-full"
+                        className="inline-flex items-center space-x-2 px-3 py-1 bg-gray-700 text-white rounded-full text-sm"
                       >
                         <span>{version}</span>
                         <button
+                          type="button"
                           onClick={() => handleRemoveVersion(version)}
                           className="hover:text-red-300"
                         >
@@ -439,6 +522,9 @@ export default function Upload({ user }: UploadProps) {
                         </button>
                       </span>
                     ))}
+                    {formData.versions.length === 0 && (
+                      <span className="text-sm text-gray-500">No versions selected</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -662,6 +748,17 @@ export default function Upload({ user }: UploadProps) {
                     placeholder="e.g., Build at Y level 60-80"
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                   />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-2">Farm Designer (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.farm_designer}
+                    onChange={(e) => setFormData({ ...formData, farm_designer: e.target.value })}
+                    placeholder="e.g., Original designer name or YouTube channel"
+                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Credit the original designer if this farm is based on someone else's design</p>
                 </div>
                 <div>
                   <label className="block font-semibold mb-2">Notes</label>

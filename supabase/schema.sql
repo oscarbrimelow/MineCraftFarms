@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS farms (
   estimated_time INTEGER,
   chunk_requirements TEXT,
   height_requirements TEXT,
-  notes TEXT
+  notes TEXT,
+  farm_designer TEXT
 );
 
 -- Comments table
