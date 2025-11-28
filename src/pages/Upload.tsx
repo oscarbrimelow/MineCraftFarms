@@ -206,20 +206,17 @@ export default function Upload({ user }: UploadProps) {
 
       // Get channel thumbnail/avatar
       // YouTube oEmbed doesn't provide profile pictures directly
-      // We'll try to construct a thumbnail URL or use a generated avatar
+      // Use a YouTube-style generated avatar or fallback to UI Avatars
       let avatarUrl = '';
       
-      // Try to get channel thumbnail from YouTube's thumbnail service
-      // For custom URLs, we can't easily get the channel ID, so use generated avatar
-      if (channelId && channelId.length > 10) {
-        // It's a channel ID (format: UC...)
-        avatarUrl = `https://yt3.googleusercontent.com/ytc/${channelId}=s176-c-k-c0x00ffffff-no-rj`;
-      } else if (authorUrl) {
-        // Try to fetch channel page to get thumbnail (might not work due to CORS)
-        // For now, use generated avatar based on channel name
-        avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=FF0000&color=fff&bold=true&size=128`;
+      // Try different methods to get avatar
+      if (channelId && channelId.startsWith('UC') && channelId.length === 24) {
+        // Standard channel ID format - try YouTube's thumbnail API pattern
+        // Note: This might not always work without proper channel ID format
+        avatarUrl = `https://yt3.ggpht.com/${channelId}=s176-c-k-c0x00ffffff-no-rj`;
       } else {
-        avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=FF0000&color=fff&bold=true&size=128`;
+        // Use generated avatar with YouTube red color scheme
+        avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=FF0000&color=fff&bold=true&size=128&font-size=0.6`;
       }
 
       setYoutubeCreator({
