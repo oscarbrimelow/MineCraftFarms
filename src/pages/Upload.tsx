@@ -1488,17 +1488,6 @@ export default function Upload({ user }: UploadProps) {
           </div>
         )}
 
-        {showCaptionExtractor && formData.video_url && (
-          <YouTubeCaptionExtractor
-            videoUrl={formData.video_url}
-            onStepsGenerated={(steps) => {
-              // Handle steps - you can integrate this with the form
-              console.log('Generated steps:', steps);
-              setShowCaptionExtractor(false);
-            }}
-            onClose={() => setShowCaptionExtractor(false)}
-          />
-        )}
       </div>
     </div>
   );
