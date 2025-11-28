@@ -162,7 +162,7 @@ export default function Home() {
               textShadow: '0 2px 10px rgba(0,0,0,0.3)',
             }}
           >
-            Browse thousands of farm designs, share your own, and find exactly what you need.
+            Browse farm designs, share your own, and find exactly what you need.
             <br />
             <span className="text-yellow-200">From simple to complex, we've got you covered.</span>
           </motion.p>
