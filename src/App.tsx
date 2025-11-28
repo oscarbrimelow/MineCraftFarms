@@ -14,6 +14,7 @@ import Moderation from './pages/Moderation';
 import TagPage from './pages/TagPage';
 import CategoryPage from './pages/CategoryPage';
 import BulkImport from './pages/BulkImport';
+import Admin from './pages/Admin';
 import { User } from '@supabase/supabase-js';
 import { useGitHubPagesRouting } from './lib/router';
 
@@ -69,6 +70,7 @@ function App() {
           <Route path="/tag/:tag" element={<TagPage />} />
           <Route path="/category/:categorySlug" element={<CategoryPage />} />
           <Route path="/bulk-import" element={<BulkImport user={user} />} />
+          <Route path="/admin" element={<Admin user={user} />} />
         </Routes>
       </main>
       <Footer />

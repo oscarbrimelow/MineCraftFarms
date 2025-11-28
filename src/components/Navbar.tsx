@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Menu, X, Upload, User, LogOut, LogIn } from 'lucide-react';
+import { Search, Menu, X, Upload, User, LogOut, LogIn, Shield } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -12,7 +12,23 @@ interface NavbarProps {
 export default function Navbar({ user }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data) setUserRole(data.role);
+        });
+    } else {
+      setUserRole(null);
+    }
+  }, [user]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +91,15 @@ export default function Navbar({ user }: NavbarProps) {
                   <Upload size={18} />
                   <span>Upload</span>
                 </Link>
+                {userRole === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-minecraft-sm"
+                  >
+                    <Shield size={18} />
+                    <span>Admin</span>
+                  </Link>
+                )}
                 <Link
                   to="/account"
                   className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-minecraft-green transition-colors"
@@ -147,6 +172,16 @@ export default function Navbar({ user }: NavbarProps) {
                   <Upload size={18} />
                   <span>Upload</span>
                 </Link>
+                {userRole === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Shield size={18} />
+                    <span>Admin</span>
+                  </Link>
+                )}
                 <Link
                   to="/account"
                   className="block px-4 py-2 text-gray-700 hover:bg-minecraft-green/10 rounded-lg"
