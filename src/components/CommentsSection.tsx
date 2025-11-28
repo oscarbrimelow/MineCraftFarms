@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, mockComments } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+import { getMinecraftMobAvatar } from '../lib/avatarUtils';
 
 interface CommentsSectionProps {
   farmId: string;
