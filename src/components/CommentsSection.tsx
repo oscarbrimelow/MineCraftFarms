@@ -153,7 +153,7 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
 
   return (
     <div className="bg-white rounded-xl shadow-minecraft p-6">
-      <h2 className="text-2xl font-bold mb-6">Comments ({comments.length})</h2>
+      <h3 className="font-semibold text-gray-700 mb-4">Comments ({comments.length})</h3>
 
       {/* New Comment Form */}
       {user ? (

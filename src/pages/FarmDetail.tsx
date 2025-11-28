@@ -662,9 +662,6 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                 </div>
               </div>
             )}
-
-            {/* Comments */}
-            <CommentsSection farmId={farm.id} user={user} />
           </div>
 
           {/* Sidebar */}
@@ -768,6 +765,9 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                 </div>
               </div>
             </div>
+
+            {/* Comments */}
+            <CommentsSection farmId={farm.id} user={user} />
           </div>
         </div>
       </div>
