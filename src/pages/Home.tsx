@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, TrendingUp, Sparkles, Zap, Grid } from 'lucide-react';
+import { ArrowRight, TrendingUp, Sparkles, Grid } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, mockFarms } from '../lib/demoData';
 import FarmCard from '../components/FarmCard';
