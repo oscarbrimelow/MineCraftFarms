@@ -3,6 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Check } from 'lucide-react';
 import { MINECRAFT_ITEMS, filterMinecraftItems } from '../lib/minecraftItems';
 
+// Helper function to get Minecraft item icon URL
+export function getMinecraftItemIcon(itemName: string): string {
+  // URL pattern from mowinpeople.com
+  const baseUrl = 'https://www.mowinpeople.com/wp-content/plugins/minecraft-list-by-W/Icons';
+  // Item names need to match exactly as they appear in the icon filenames
+  return `${baseUrl}/${itemName}.png`;
+}
+
 interface MaterialAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
@@ -157,9 +165,25 @@ export default function MaterialAutocomplete({
                   letterSpacing: '0.3px',
                 }}
               >
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg">🧱</span>
-                  <span>{item}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                    <img
+                      src={getMinecraftItemIcon(item)}
+                      alt={item}
+                      className="w-8 h-8 object-contain"
+                      onError={(e) => {
+                        // Fallback to emoji if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const fallback = target.nextElementSibling as HTMLElement;
+                        if (fallback) {
+                          fallback.style.display = 'inline';
+                        }
+                      }}
+                    />
+                    <span className="text-lg hidden">🧱</span>
+                  </div>
+                  <span className="flex-1">{item}</span>
                 </div>
               </motion.div>
             ))}
