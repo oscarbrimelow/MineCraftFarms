@@ -31,6 +31,8 @@ export default function FarmDetail({ user }: FarmDetailProps) {
   const [loading, setLoading] = useState(true);
   const [upvoted, setUpvoted] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
+  const [loadingCreator, setLoadingCreator] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,6 +44,21 @@ export default function FarmDetail({ user }: FarmDetailProps) {
       checkUpvoted();
     }
   }, [farm, user]);
+
+  useEffect(() => {
+    if (farm?.video_url) {
+      fetchYouTubeCreator(farm.video_url, farm?.farm_designer);
+    } else if (farm?.farm_designer) {
+      // If we have farm_designer but no video URL, create a simple creator object
+      setYoutubeCreator({
+        name: farm.farm_designer,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(farm.farm_designer)}&background=FF0000&color=fff&bold=true&size=128&font-size=0.6`,
+        channelId: '',
+      });
+    } else {
+      setYoutubeCreator(null);
+    }
+  }, [farm?.video_url, farm?.farm_designer]);
 
   const fetchFarm = async () => {
     if (isDemoMode()) {
@@ -146,6 +163,72 @@ export default function FarmDetail({ user }: FarmDetailProps) {
     }
     // Open report modal or navigate to report page
     alert('Report functionality - to be implemented');
+  };
+
+  // Extract YouTube channel info from video URL
+  const fetchYouTubeCreator = async (videoUrl: string, fallbackDesigner?: string) => {
+    if (!videoUrl || (!videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be'))) {
+      setYoutubeCreator(null);
+      return;
+    }
+
+    setLoadingCreator(true);
+    try {
+      // Use YouTube oEmbed API to get video info (no API key needed)
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
+      const response = await fetch(oembedUrl);
+      if (!response.ok) throw new Error('Failed to fetch video info');
+      
+      const data = await response.json();
+      // oEmbed provides author_name and author_url
+      const authorName = data.author_name || 'Unknown Creator';
+      const authorUrl = data.author_url || '';
+
+      // Extract channel ID from author URL or video URL
+      let channelId = '';
+      const channelMatch = authorUrl.match(/channel\/([^/?]+)/);
+      if (channelMatch) {
+        channelId = channelMatch[1];
+      } else {
+        // Try to get from custom URL
+        const customMatch = authorUrl.match(/c\/([^/?]+)/) || authorUrl.match(/user\/([^/?]+)/);
+        if (customMatch) {
+          channelId = customMatch[1];
+        }
+      }
+
+      // Get channel thumbnail/avatar
+      let avatarUrl = '';
+      
+      // Try different methods to get avatar
+      if (channelId && channelId.startsWith('UC') && channelId.length === 24) {
+        // Standard channel ID format - try YouTube's thumbnail API pattern
+        avatarUrl = `https://yt3.ggpht.com/${channelId}=s176-c-k-c0x00ffffff-no-rj`;
+      } else {
+        // Use generated avatar with YouTube red color scheme
+        avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=FF0000&color=fff&bold=true&size=128&font-size=0.6`;
+      }
+
+      setYoutubeCreator({
+        name: authorName,
+        avatar: avatarUrl,
+        channelId: channelId || authorUrl,
+      });
+    } catch (error) {
+      console.error('Error fetching YouTube creator:', error);
+      // Fallback to farm_designer if available
+      if (fallbackDesigner) {
+        setYoutubeCreator({
+          name: fallbackDesigner,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackDesigner)}&background=FF0000&color=fff&bold=true&size=128&font-size=0.6`,
+          channelId: '',
+        });
+      } else {
+        setYoutubeCreator(null);
+      }
+    } finally {
+      setLoadingCreator(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -475,9 +558,57 @@ export default function FarmDetail({ user }: FarmDetailProps) {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* YouTube Channel Card */}
+            {(youtubeCreator || farm?.farm_designer) && (
+              <div className="bg-white rounded-xl shadow-minecraft p-6">
+                <h3 className="font-semibold text-gray-700 mb-4">Designed By</h3>
+                {loadingCreator ? (
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-minecraft-green"></div>
+                    <span className="text-sm">Loading...</span>
+                  </div>
+                ) : youtubeCreator ? (
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={youtubeCreator.avatar}
+                      alt={youtubeCreator.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-red-200"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(youtubeCreator.name)}&background=FF0000&color=fff&bold=true&size=128`;
+                      }}
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold">{youtubeCreator.name}</div>
+                      <div className="text-sm text-gray-600">YouTube Creator</div>
+                      {youtubeCreator.channelId && (
+                        <a
+                          href={youtubeCreator.channelId.startsWith('http') ? youtubeCreator.channelId : `https://youtube.com/${youtubeCreator.channelId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-red-600 hover:text-red-700 mt-1 inline-block"
+                        >
+                          View Channel →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ) : farm?.farm_designer ? (
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-2xl">
+                      🎬
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-semibold">{farm.farm_designer}</div>
+                      <div className="text-sm text-gray-600">Farm Designer</div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
             {/* Author Card */}
             <div className="bg-white rounded-xl shadow-minecraft p-6">
-              <h3 className="font-semibold text-gray-700 mb-4">Created By</h3>
+              <h3 className="font-semibold text-gray-700 mb-4">Uploaded By</h3>
               <div className="flex items-center space-x-3">
                 {farm.users?.avatar_url ? (
                   <img

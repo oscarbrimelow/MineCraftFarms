@@ -1,6 +1,12 @@
 -- Storage policies for farm-images bucket
 -- Run this in Supabase SQL Editor to allow image uploads
 
+-- Drop existing policies if they exist (safe to run multiple times)
+DROP POLICY IF EXISTS "Users can upload to own folder" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update own files" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own files" ON storage.objects;
+DROP POLICY IF EXISTS "Public can view images" ON storage.objects;
+
 -- Allow authenticated users to upload files to their own folder
 CREATE POLICY "Users can upload to own folder"
 ON storage.objects FOR INSERT
