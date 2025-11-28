@@ -21,7 +21,9 @@ export default function Account({ user: initialUser }: AccountProps) {
     username: '',
     bio: '',
     avatar_url: '',
+    username_changed_at: '',
   });
+  const [daysUntilCanChangeUsername, setDaysUntilCanChangeUsername] = useState<number | null>(null);
 
   const [authData, setAuthData] = useState({
     email: '',
