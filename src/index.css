@@ -4,7 +4,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-gray-200;
   }
   body {
     @apply bg-gradient-to-br from-minecraft-sky-light via-white to-minecraft-green-light/20 text-gray-900 antialiased;
