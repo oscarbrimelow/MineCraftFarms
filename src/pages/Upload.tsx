@@ -9,6 +9,7 @@ import YouTubeCaptionExtractor from '../components/YouTubeCaptionExtractor';
 import MaterialAutocomplete from '../components/MaterialAutocomplete';
 import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
+import { getYouTubeVideoId } from '../lib/avatarUtils';
 
 interface UploadProps {
   user: SupabaseUser | null;
@@ -408,6 +409,46 @@ export default function Upload({ user }: UploadProps) {
     if (formData.platform.includes('Java') && formData.versions.length === 0) {
       alert('Please add at least one version for Java.');
       return;
+    }
+
+    // Check for duplicate YouTube video URL (only if video URL is provided)
+    if (formData.video_url && formData.video_url.trim() && !isDemoMode()) {
+      try {
+        const videoId = getYouTubeVideoId(formData.video_url);
+        if (videoId) {
+          // Check if a farm with this video ID already exists (excluding current farm if editing)
+          const { data: existingFarms, error: checkError } = await supabase
+            .from('farms')
+            .select('id, slug, title, platform, video_url')
+            .eq('public', true)
+            .not('video_url', 'is', null);
+          
+          if (!checkError && existingFarms && existingFarms.length > 0) {
+            // Check if any existing farm has the same video ID
+            const duplicate = existingFarms.find((farm: any) => {
+              if (editId && farm.id === editId) return false; // Skip current farm if editing
+              if (!farm.video_url) return false;
+              const existingVideoId = getYouTubeVideoId(farm.video_url);
+              return existingVideoId === videoId;
+            });
+
+            if (duplicate) {
+              const confirmMessage = `A farm with this YouTube video already exists: "${duplicate.title}"\n\nWould you like to view the existing farm instead?`;
+              if (confirm(confirmMessage)) {
+                navigate(`/farms/${duplicate.platform[0] || 'java'}/${duplicate.slug}`);
+                return;
+              } else {
+                alert('Please use a different YouTube video or remove the video URL.');
+                setUploading(false);
+                return;
+              }
+            }
+          }
+        }
+      } catch (checkError) {
+        console.error('Error checking for duplicate video:', checkError);
+        // Continue with upload if check fails (don't block user)
+      }
     }
 
     setUploading(true);
