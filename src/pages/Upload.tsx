@@ -563,7 +563,6 @@ export default function Upload({ user }: UploadProps) {
         .getPublicUrl(data.path);
 
       setFormData((prev) => ({ ...prev, schematic_url: publicUrl }));
-      setSchematicFile(null);
     } catch (error: any) {
       console.error('Error uploading schematic:', error);
       alert(error.message || 'Failed to upload schematic');
