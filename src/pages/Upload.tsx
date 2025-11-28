@@ -29,12 +29,6 @@ const COMMON_VERSIONS = [
   '1.9.4', '1.9.3', '1.9.2', '1.9.1', '1.9',
   '1.8.9', '1.8.8', '1.8.7', '1.8.6', '1.8.5', '1.8.4', '1.8.3', '1.8.2', '1.8.1', '1.8',
 ];
-const COMMON_MATERIALS = [
-  'Redstone Dust', 'Redstone Repeater', 'Redstone Comparator', 'Hopper', 'Chest',
-  'Observer', 'Piston', 'Sticky Piston', 'Slime Block', 'Iron Block',
-  'Glass', 'Sand', 'Gravel', 'Cobblestone', 'Stone', 'Wood Planks',
-  'Dirt', 'Grass Block', 'Water Bucket', 'Lava Bucket', 'Torch',
-];
 
 export default function Upload({ user }: UploadProps) {
   const navigate = useNavigate();
