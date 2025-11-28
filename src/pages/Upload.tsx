@@ -52,7 +52,8 @@ export default function Upload({ user }: UploadProps) {
     public: true,
   });
 
-  const [newMaterial, setNewMaterial] = useState({ name: '', count: 1 });
+  const [newRequiredMaterial, setNewRequiredMaterial] = useState({ name: '', count: '' });
+  const [newOptionalMaterial, setNewOptionalMaterial] = useState({ name: '', count: '' });
   const [newTag, setNewTag] = useState('');
   const [newVersion, setNewVersion] = useState('');
   const [preview, setPreview] = useState(false);
@@ -277,20 +278,27 @@ export default function Upload({ user }: UploadProps) {
   };
 
   const handleAddMaterial = (optional = false) => {
-    if (!newMaterial.name.trim()) return;
+    const material = optional ? newOptionalMaterial : newRequiredMaterial;
+    
+    if (!material.name.trim()) return;
     
     // Validate that the material is a valid Minecraft item
-    if (!MINECRAFT_ITEMS.includes(newMaterial.name)) {
+    if (!MINECRAFT_ITEMS.includes(material.name)) {
       alert('Please select a valid Minecraft item from the dropdown.');
       return;
     }
 
+    // Default count to 1 if empty
+    const count = material.count === '' || material.count === null || material.count === undefined 
+      ? 1 
+      : parseInt(String(material.count)) || 1;
+
     const materials = optional ? formData.optional_materials : formData.materials;
-    const existingIndex = materials.findIndex((m) => m.name === newMaterial.name);
+    const existingIndex = materials.findIndex((m) => m.name === material.name);
 
     if (existingIndex >= 0) {
       const updated = [...materials];
-      updated[existingIndex].count += newMaterial.count;
+      updated[existingIndex].count += count;
       setFormData((prev) => ({
         ...prev,
         [optional ? 'optional_materials' : 'materials']: updated,
@@ -300,11 +308,17 @@ export default function Upload({ user }: UploadProps) {
         ...prev,
         [optional ? 'optional_materials' : 'materials']: [
           ...materials,
-          { name: newMaterial.name, count: newMaterial.count },
+          { name: material.name, count: count },
         ],
       }));
     }
-    setNewMaterial({ name: '', count: 1 });
+    
+    // Reset the appropriate material state
+    if (optional) {
+      setNewOptionalMaterial({ name: '', count: '' });
+    } else {
+      setNewRequiredMaterial({ name: '', count: '' });
+    }
   };
 
   const handleRemoveMaterial = (index: number, optional = false) => {
@@ -736,15 +750,16 @@ export default function Upload({ user }: UploadProps) {
                   <label className="block font-semibold mb-2">Required Materials</label>
                   <div className="flex gap-2 mb-2">
                     <MaterialAutocomplete
-                      value={newMaterial.name}
-                      onChange={(value) => setNewMaterial({ ...newMaterial, name: value })}
+                      value={newRequiredMaterial.name}
+                      onChange={(value) => setNewRequiredMaterial({ ...newRequiredMaterial, name: value })}
                       placeholder="Search Minecraft items..."
                       onEnter={() => handleAddMaterial()}
                     />
                     <input
                       type="number"
-                      value={newMaterial.count}
-                      onChange={(e) => setNewMaterial({ ...newMaterial, count: parseInt(e.target.value) || 1 })}
+                      value={newRequiredMaterial.count}
+                      onChange={(e) => setNewRequiredMaterial({ ...newRequiredMaterial, count: e.target.value })}
+                      placeholder="Qty"
                       min="1"
                       className="w-20 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                     />
@@ -778,10 +793,18 @@ export default function Upload({ user }: UploadProps) {
                   <label className="block font-semibold mb-2">Optional Materials</label>
                   <div className="flex gap-2 mb-2">
                     <MaterialAutocomplete
-                      value={newMaterial.name}
-                      onChange={(value) => setNewMaterial({ ...newMaterial, name: value })}
+                      value={newOptionalMaterial.name}
+                      onChange={(value) => setNewOptionalMaterial({ ...newOptionalMaterial, name: value })}
                       placeholder="Search Minecraft items..."
                       onEnter={() => handleAddMaterial(true)}
+                    />
+                    <input
+                      type="number"
+                      value={newOptionalMaterial.count}
+                      onChange={(e) => setNewOptionalMaterial({ ...newOptionalMaterial, count: e.target.value })}
+                      placeholder="Qty"
+                      min="1"
+                      className="w-20 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                     />
                     <button
                       onClick={() => handleAddMaterial(true)}
