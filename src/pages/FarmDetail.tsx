@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import {
   ThumbsUp,
   Clock,
   Copy,
   Check,
-  Video,
   Tag,
   Share2,
   Flag,
@@ -16,7 +14,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
-import { isDemoMode, mockFarms, mockComments } from '../lib/demoData';
+import { isDemoMode, mockFarms } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import CommentsSection from '../components/CommentsSection';
 import StepsEditor from '../components/StepsEditor';
@@ -26,7 +24,7 @@ interface FarmDetailProps {
 }
 
 export default function FarmDetail({ user }: FarmDetailProps) {
-  const { platform, slug } = useParams<{ platform: string; slug: string }>();
+  const { slug } = useParams<{ platform: string; slug: string }>();
   const [farm, setFarm] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [upvoted, setUpvoted] = useState(false);

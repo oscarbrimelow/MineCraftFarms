@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Upload as UploadIcon, Plus, X, Save, Eye, Video, Image as ImageIcon } from 'lucide-react';
+import { Upload as UploadIcon, X, Eye, Video } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isDemoMode } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -215,7 +214,7 @@ export default function Upload({ user }: UploadProps) {
 
     const uploadPromises = Array.from(files).map(async (file) => {
       const fileName = `${user.id}/${Date.now()}_${file.name}`;
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('farm-images')
         .upload(fileName, file);
 

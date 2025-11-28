@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Edit3, Trash2, Flag, ThumbsUp } from 'lucide-react';
+import { Send, Edit3, Trash2, Flag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, mockComments } from '../lib/demoData';
@@ -142,7 +142,7 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
     }
   };
 
-  const handleReport = (commentId: string) => {
+  const handleReport = (_commentId: string) => {
     if (!user) {
       alert('Please sign in to report comments.');
       return;

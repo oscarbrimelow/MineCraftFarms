@@ -22,11 +22,25 @@ export const supabase = createClient(url, key, {
 
 // Override supabase methods in demo mode
 if (isDemoMode()) {
-  // Mock auth methods
+  // Mock auth methods with proper types
   supabase.auth.getSession = async () => ({ data: { session: null }, error: null });
-  supabase.auth.onAuthStateChange = () => ({ data: { subscription: { unsubscribe: () => {} } } });
-  supabase.auth.signInWithPassword = async () => ({ data: null, error: { message: 'Demo mode - sign in disabled' } });
-  supabase.auth.signUp = async () => ({ data: null, error: { message: 'Demo mode - sign up disabled' } });
+  supabase.auth.onAuthStateChange = () => ({ 
+    data: { 
+      subscription: { 
+        id: 'demo',
+        callback: () => {},
+        unsubscribe: () => {}
+      } 
+    } 
+  } as any);
+  supabase.auth.signInWithPassword = async () => ({ 
+    data: { user: null, session: null }, 
+    error: { message: 'Demo mode - sign in disabled' } as any 
+  });
+  supabase.auth.signUp = async () => ({ 
+    data: { user: null, session: null }, 
+    error: { message: 'Demo mode - sign up disabled' } as any 
+  });
   supabase.auth.signOut = async () => ({ error: null });
 }
 

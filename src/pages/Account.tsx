@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { LogIn, User, Mail, Lock, Upload, Heart, Edit3, Save, X } from 'lucide-react';
+import { Mail, Lock, Upload, Heart, Edit3, Save, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import FarmCard from '../components/FarmCard';
