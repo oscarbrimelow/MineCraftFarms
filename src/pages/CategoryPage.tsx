@@ -97,6 +97,7 @@ export default function CategoryPage() {
       setFarms(data || []);
     } catch (error) {
       console.error('Error fetching farms by category:', error);
+      setFarms([]); // Set empty array on error to prevent crashes
     } finally {
       setLoading(false);
     }
@@ -104,105 +105,174 @@ export default function CategoryPage() {
 
   // Client-side sorting for complex cases
   const sortedFarms = useMemo(() => {
-    let sorted = [...farms];
+    try {
+      let sorted = [...farms];
 
-    switch (selectedSort) {
-      case 'drop_rate_desc':
-        sorted.sort((a, b) => {
-          const aRate = getMaxDropRate(a);
-          const bRate = getMaxDropRate(b);
-          return bRate - aRate;
-        });
-        break;
-      case 'drop_rate_asc':
-        sorted.sort((a, b) => {
-          const aRate = getMaxDropRate(a);
-          const bRate = getMaxDropRate(b);
-          return aRate - bRate;
-        });
-        break;
-      case 'build_time_asc':
-        sorted.sort((a, b) => {
-          const aTime = a.estimated_time || Infinity;
-          const bTime = b.estimated_time || Infinity;
-          return aTime - bTime;
-        });
-        break;
-      case 'build_time_desc':
-        sorted.sort((a, b) => {
-          const aTime = a.estimated_time || 0;
-          const bTime = b.estimated_time || 0;
-          return bTime - aTime;
-        });
-        break;
-      case 'resources_asc':
-        sorted.sort((a, b) => {
-          const aCount = getMaterialCount(a);
-          const bCount = getMaterialCount(b);
-          return aCount - bCount;
-        });
-        break;
-      case 'resources_desc':
-        sorted.sort((a, b) => {
-          const aCount = getMaterialCount(a);
-          const bCount = getMaterialCount(b);
-          return bCount - aCount;
-        });
-        break;
-      case 'version_newest':
-        sorted.sort((a, b) => {
-          const aVersion = getNewestVersion(a.versions || []);
-          const bVersion = getNewestVersion(b.versions || []);
-          return compareVersions(bVersion, aVersion);
-        });
-        break;
-      case 'version_oldest':
-        sorted.sort((a, b) => {
-          const aVersion = getNewestVersion(a.versions || []);
-          const bVersion = getNewestVersion(b.versions || []);
-          return compareVersions(aVersion, bVersion);
-        });
-        break;
+      switch (selectedSort) {
+        case 'drop_rate_desc':
+          sorted.sort((a, b) => {
+            try {
+              const aRate = getMaxDropRate(a);
+              const bRate = getMaxDropRate(b);
+              return bRate - aRate;
+            } catch (e) {
+              return 0;
+            }
+          });
+          break;
+        case 'drop_rate_asc':
+          sorted.sort((a, b) => {
+            try {
+              const aRate = getMaxDropRate(a);
+              const bRate = getMaxDropRate(b);
+              return aRate - bRate;
+            } catch (e) {
+              return 0;
+            }
+          });
+          break;
+        case 'build_time_asc':
+          sorted.sort((a, b) => {
+            try {
+              const aTime = a?.estimated_time || Infinity;
+              const bTime = b?.estimated_time || Infinity;
+              return aTime - bTime;
+            } catch (e) {
+              return 0;
+            }
+          });
+          break;
+        case 'build_time_desc':
+          sorted.sort((a, b) => {
+            try {
+              const aTime = a?.estimated_time || 0;
+              const bTime = b?.estimated_time || 0;
+              return bTime - aTime;
+            } catch (e) {
+              return 0;
+            }
+          });
+          break;
+        case 'resources_asc':
+          sorted.sort((a, b) => {
+            try {
+              const aCount = getMaterialCount(a);
+              const bCount = getMaterialCount(b);
+              return aCount - bCount;
+            } catch (e) {
+              return 0;
+            }
+          });
+          break;
+        case 'resources_desc':
+          sorted.sort((a, b) => {
+            try {
+              const aCount = getMaterialCount(a);
+              const bCount = getMaterialCount(b);
+              return bCount - aCount;
+            } catch (e) {
+              return 0;
+            }
+          });
+          break;
+        case 'version_newest':
+          sorted.sort((a, b) => {
+            try {
+              const aVersion = getNewestVersion(a?.versions || []);
+              const bVersion = getNewestVersion(b?.versions || []);
+              return compareVersions(bVersion, aVersion);
+            } catch (e) {
+              return 0;
+            }
+          });
+          break;
+        case 'version_oldest':
+          sorted.sort((a, b) => {
+            try {
+              const aVersion = getNewestVersion(a?.versions || []);
+              const bVersion = getNewestVersion(b?.versions || []);
+              return compareVersions(aVersion, bVersion);
+            } catch (e) {
+              return 0;
+            }
+          });
+          break;
+      }
+
+      return sorted;
+    } catch (error) {
+      console.error('Error sorting farms:', error);
+      return farms; // Return original array if sorting fails
     }
-
-    return sorted;
   }, [farms, selectedSort]);
 
   const getMaxDropRate = (farm: any): number => {
-    if (!farm.drop_rate_per_hour || !Array.isArray(farm.drop_rate_per_hour)) return 0;
-    return Math.max(
-      ...farm.drop_rate_per_hour.map((dr: any) => {
-        const rate = parseFloat(dr.rate?.toString().replace(/[^0-9.]/g, '') || '0');
-        return isNaN(rate) ? 0 : rate;
-      })
-    );
+    try {
+      if (!farm || !farm.drop_rate_per_hour || !Array.isArray(farm.drop_rate_per_hour)) return 0;
+      if (farm.drop_rate_per_hour.length === 0) return 0;
+      
+      const rates = farm.drop_rate_per_hour
+        .map((dr: any) => {
+          if (!dr) return 0;
+          const rateStr = dr.rate?.toString() || '0';
+          const rate = parseFloat(rateStr.replace(/[^0-9.]/g, '') || '0');
+          return isNaN(rate) ? 0 : rate;
+        })
+        .filter((r: number) => r > 0);
+      
+      if (rates.length === 0) return 0;
+      return Math.max(...rates);
+    } catch (e) {
+      return 0;
+    }
   };
 
   const getMaterialCount = (farm: any): number => {
-    const materials = farm.materials || [];
-    const optional = farm.optional_materials || [];
-    return materials.length + optional.length;
+    try {
+      if (!farm) return 0;
+      const materials = Array.isArray(farm.materials) ? farm.materials : [];
+      const optional = Array.isArray(farm.optional_materials) ? farm.optional_materials : [];
+      return materials.length + optional.length;
+    } catch (e) {
+      return 0;
+    }
   };
 
   const getNewestVersion = (versions: string[]): string => {
-    if (versions.length === 0) return '0.0';
-    // Sort versions and return the newest
-    const sorted = [...versions].sort((a, b) => compareVersions(b, a));
-    return sorted[0] || '0.0';
+    try {
+      if (!Array.isArray(versions) || versions.length === 0) return '0.0';
+      // Sort versions and return the newest
+      const validVersions = versions.filter(v => v && typeof v === 'string');
+      if (validVersions.length === 0) return '0.0';
+      const sorted = [...validVersions].sort((a, b) => compareVersions(b, a));
+      return sorted[0] || '0.0';
+    } catch (e) {
+      return '0.0';
+    }
   };
 
   const compareVersions = (a: string, b: string): number => {
-    const aParts = a.split('.').map(Number);
-    const bParts = b.split('.').map(Number);
-    const maxLength = Math.max(aParts.length, bParts.length);
-    
-    for (let i = 0; i < maxLength; i++) {
-      const aPart = aParts[i] || 0;
-      const bPart = bParts[i] || 0;
-      if (aPart > bPart) return 1;
-      if (aPart < bPart) return -1;
+    try {
+      if (!a || !b) return 0;
+      const aParts = a.split('.').map(Number).filter(n => !isNaN(n));
+      const bParts = b.split('.').map(Number).filter(n => !isNaN(n));
+      
+      if (aParts.length === 0 && bParts.length === 0) return 0;
+      if (aParts.length === 0) return -1;
+      if (bParts.length === 0) return 1;
+      
+      const maxLength = Math.max(aParts.length, bParts.length);
+      
+      for (let i = 0; i < maxLength; i++) {
+        const aPart = aParts[i] || 0;
+        const bPart = bParts[i] || 0;
+        if (aPart > bPart) return 1;
+        if (aPart < bPart) return -1;
+      }
+      return 0;
+    } catch (e) {
+      return 0;
     }
-    return 0;
   };
 
   const handleSortChange = (sortValue: string) => {

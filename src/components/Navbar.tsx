@@ -82,15 +82,15 @@ export default function Navbar({ user }: NavbarProps) {
             >
               Browse
             </Link>
+            <Link
+              to="/upload"
+              className="flex items-center space-x-2 px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark transition-colors shadow-minecraft-sm"
+            >
+              <Upload size={18} />
+              <span>Upload</span>
+            </Link>
             {user ? (
               <>
-                <Link
-                  to="/upload"
-                  className="flex items-center space-x-2 px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark transition-colors shadow-minecraft-sm"
-                >
-                  <Upload size={18} />
-                  <span>Upload</span>
-                </Link>
                 {userRole === 'admin' && (
                   <Link
                     to="/admin"
@@ -162,16 +162,16 @@ export default function Navbar({ user }: NavbarProps) {
             >
               Browse
             </Link>
+            <Link
+              to="/upload"
+              className="flex items-center space-x-2 px-4 py-2 bg-minecraft-green text-white rounded-lg"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Upload size={18} />
+              <span>Upload</span>
+            </Link>
             {user ? (
               <>
-                <Link
-                  to="/upload"
-                  className="flex items-center space-x-2 px-4 py-2 bg-minecraft-green text-white rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Upload size={18} />
-                  <span>Upload</span>
-                </Link>
                 {userRole === 'admin' && (
                   <Link
                     to="/admin"

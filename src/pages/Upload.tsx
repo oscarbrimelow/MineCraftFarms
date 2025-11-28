@@ -83,15 +83,7 @@ export default function Upload({ user }: UploadProps) {
     }
   }, [editId, user]);
 
-  useEffect(() => {
-    if (isDemoMode() || !user) {
-      // In demo mode or if not logged in, show message
-      if (isDemoMode()) {
-        return; // Allow viewing in demo mode
-      }
-      navigate('/account');
-    }
-  }, [user, navigate]);
+  // Removed auto-redirect - will show prompt instead
 
   if (isDemoMode()) {
     return (
@@ -738,7 +730,37 @@ export default function Upload({ user }: UploadProps) {
   };
 
   if (!user && !isDemoMode()) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-minecraft-sky-light/50 to-white py-16">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl shadow-minecraft p-8 text-center">
+            <div className="mb-6">
+              <UploadIcon className="mx-auto text-minecraft-green" size={64} />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-4">
+              Sign In to Upload Farms
+            </h1>
+            <p className="text-gray-600 mb-8 text-lg">
+              Create an account or sign in to start sharing your Minecraft farm designs with the community!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => navigate('/account')}
+                className="px-8 py-4 bg-minecraft-green text-white rounded-xl font-semibold text-lg hover:bg-minecraft-green-dark transition-colors shadow-minecraft"
+              >
+                Create Account / Sign In
+              </button>
+              <Link
+                to="/farms"
+                className="px-8 py-4 bg-gray-200 text-gray-700 rounded-xl font-semibold text-lg hover:bg-gray-300 transition-colors"
+              >
+                Browse Farms Instead
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
