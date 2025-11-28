@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Play,
   Edit3,
+  Trash2,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
@@ -144,6 +145,56 @@ export default function FarmDetail({ user }: FarmDetailProps) {
     }
     // Open report modal or navigate to report page
     alert('Report functionality - to be implemented');
+  };
+
+  const handleDelete = async () => {
+    if (!user || !farm) return;
+    
+    if (user.id !== farm.author_id) {
+      alert('You can only delete your own farms.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete "${farm.title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // Delete associated images from storage if any
+      if (farm.images && farm.images.length > 0 && user.id) {
+        const imagePromises = farm.images.map(async (imageUrl: string) => {
+          // Extract the file path from the URL
+          const urlParts = imageUrl.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const filePath = `${user.id}/${fileName}`;
+          
+          try {
+            await supabase.storage
+              .from('farm-images')
+              .remove([filePath]);
+          } catch (error) {
+            console.error('Error deleting image:', error);
+            // Continue even if image deletion fails
+          }
+        });
+        
+        await Promise.all(imagePromises);
+      }
+
+      // Delete the farm (this will cascade delete comments and upvotes)
+      const { error } = await supabase
+        .from('farms')
+        .delete()
+        .eq('id', farm.id);
+
+      if (error) throw error;
+
+      alert('Farm deleted successfully.');
+      navigate('/farms');
+    } catch (error: any) {
+      console.error('Error deleting farm:', error);
+      alert(error.message || 'Failed to delete farm. Please try again.');
+    }
   };
 
   if (loading) {
@@ -287,13 +338,22 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                   <span>Report</span>
                 </button>
                 {user && user.id === farm.author_id && (
-                  <Link
-                    to={`/upload?edit=${farm.id}`}
-                    className="flex items-center space-x-2 px-6 py-3 bg-minecraft-gold text-white rounded-xl font-semibold hover:bg-minecraft-gold-dark transition-colors"
-                  >
-                    <Edit3 size={20} />
-                    <span>Edit</span>
-                  </Link>
+                  <>
+                    <Link
+                      to={`/upload?edit=${farm.id}`}
+                      className="flex items-center space-x-2 px-6 py-3 bg-minecraft-gold text-white rounded-xl font-semibold hover:bg-minecraft-gold-dark transition-colors"
+                    >
+                      <Edit3 size={20} />
+                      <span>Edit</span>
+                    </Link>
+                    <button
+                      onClick={handleDelete}
+                      className="flex items-center space-x-2 px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
+                    >
+                      <Trash2 size={20} />
+                      <span>Delete</span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>

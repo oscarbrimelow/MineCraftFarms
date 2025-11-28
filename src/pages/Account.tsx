@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Upload, Heart, Edit3, Save, X } from 'lucide-react';
+import { Mail, Lock, Upload, Heart, Edit3, Save, X, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import FarmCard from '../components/FarmCard';
@@ -66,6 +66,49 @@ export default function Account({ user: initialUser }: AccountProps) {
       .order('created_at', { ascending: false });
 
     setMyFarms(data || []);
+  };
+
+  const handleDeleteFarm = async (farmId: string, farmTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${farmTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // Delete associated images from storage if any
+      const farm = myFarms.find((f) => f.id === farmId);
+      if (farm && farm.images && farm.images.length > 0 && user) {
+        const imagePromises = farm.images.map(async (imageUrl: string) => {
+          const urlParts = imageUrl.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const filePath = `${user.id}/${fileName}`;
+          
+          try {
+            await supabase.storage
+              .from('farm-images')
+              .remove([filePath]);
+          } catch (error) {
+            console.error('Error deleting image:', error);
+          }
+        });
+        
+        await Promise.all(imagePromises);
+      }
+
+      // Delete the farm
+      const { error } = await supabase
+        .from('farms')
+        .delete()
+        .eq('id', farmId);
+
+      if (error) throw error;
+
+      // Refresh the list
+      fetchMyFarms();
+      alert('Farm deleted successfully.');
+    } catch (error: any) {
+      console.error('Error deleting farm:', error);
+      alert(error.message || 'Failed to delete farm. Please try again.');
+    }
   };
 
   const fetchUpvotedFarms = async () => {
@@ -457,7 +500,27 @@ export default function Account({ user: initialUser }: AccountProps) {
             {myFarms.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {myFarms.map((farm, index) => (
-                  <FarmCard key={farm.id} farm={farm} index={index} />
+                  <div key={farm.id} className="relative group">
+                    <FarmCard farm={farm} index={index} />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-2">
+                        <Link
+                          to={`/upload?edit=${farm.id}`}
+                          className="p-2 bg-minecraft-gold text-white rounded-lg hover:bg-minecraft-gold-dark transition-colors shadow-lg"
+                          title="Edit"
+                        >
+                          <Edit3 size={18} />
+                        </Link>
+                        <button
+                          onClick={() => handleDeleteFarm(farm.id, farm.title)}
+                          className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-lg"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
