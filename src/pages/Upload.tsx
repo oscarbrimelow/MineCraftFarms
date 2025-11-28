@@ -8,6 +8,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import YouTubeCaptionExtractor from '../components/YouTubeCaptionExtractor';
 import MaterialAutocomplete from '../components/MaterialAutocomplete';
 import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
+import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
 
 interface UploadProps {
   user: SupabaseUser | null;
@@ -776,9 +777,27 @@ export default function Upload({ user }: UploadProps) {
                         key={index}
                         className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                       >
-                        <span>
-                          {material.name} x{material.count}
-                        </span>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                            <img
+                              src={getMinecraftItemIcon(material.name)}
+                              alt={material.name}
+                              className="w-8 h-8 object-contain"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) {
+                                  fallback.style.display = 'inline';
+                                }
+                              }}
+                            />
+                            <span className="text-lg hidden">🧱</span>
+                          </div>
+                          <span>
+                            {material.name} x{material.count}
+                          </span>
+                        </div>
                         <button
                           onClick={() => handleRemoveMaterial(index)}
                           className="text-red-600 hover:text-red-700"
@@ -819,9 +838,27 @@ export default function Upload({ user }: UploadProps) {
                         key={index}
                         className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg"
                       >
-                        <span>
-                          {material.name} x{material.count}
-                        </span>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                            <img
+                              src={getMinecraftItemIcon(material.name)}
+                              alt={material.name}
+                              className="w-8 h-8 object-contain"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) {
+                                  fallback.style.display = 'inline';
+                                }
+                              }}
+                            />
+                            <span className="text-lg hidden">✨</span>
+                          </div>
+                          <span>
+                            {material.name} x{material.count}
+                          </span>
+                        </div>
                         <button
                           onClick={() => handleRemoveMaterial(index, true)}
                           className="text-red-600 hover:text-red-700"

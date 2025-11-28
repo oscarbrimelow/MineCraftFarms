@@ -2,14 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Check } from 'lucide-react';
 import { MINECRAFT_ITEMS, filterMinecraftItems } from '../lib/minecraftItems';
+import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
 
-// Helper function to get Minecraft item icon URL
-export function getMinecraftItemIcon(itemName: string): string {
-  // URL pattern from mowinpeople.com
-  const baseUrl = 'https://www.mowinpeople.com/wp-content/plugins/minecraft-list-by-W/Icons';
-  // Item names need to match exactly as they appear in the icon filenames
-  return `${baseUrl}/${itemName}.png`;
-}
 
 interface MaterialAutocompleteProps {
   value: string;

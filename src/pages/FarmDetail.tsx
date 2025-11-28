@@ -20,6 +20,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import CommentsSection from '../components/CommentsSection';
 import StepsEditor from '../components/StepsEditor';
 import { getMinecraftMobAvatar, getYouTubeThumbnail, getYouTubeVideoId } from '../lib/avatarUtils';
+import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
 
 interface FarmDetailProps {
   user: SupabaseUser | null;
@@ -478,7 +479,23 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-2 border-gray-200"
                   >
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl">🧱</span>
+                      <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                        <img
+                          src={getMinecraftItemIcon(material.name || material.item)}
+                          alt={material.name || material.item}
+                          className="w-10 h-10 object-contain"
+                          onError={(e) => {
+                            // Fallback to emoji if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) {
+                              fallback.style.display = 'inline';
+                            }
+                          }}
+                        />
+                        <span className="text-2xl hidden">🧱</span>
+                      </div>
                       <div>
                         <div className="font-semibold">{material.name || material.item}</div>
                         {material.count && (
@@ -512,7 +529,23 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                         className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border-2 border-yellow-200"
                       >
                         <div className="flex items-center space-x-3">
-                          <span className="text-2xl">✨</span>
+                          <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                            <img
+                              src={getMinecraftItemIcon(material.name || material.item)}
+                              alt={material.name || material.item}
+                              className="w-10 h-10 object-contain"
+                              onError={(e) => {
+                                // Fallback to emoji if image fails to load
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                if (fallback) {
+                                  fallback.style.display = 'inline';
+                                }
+                              }}
+                            />
+                            <span className="text-2xl hidden">✨</span>
+                          </div>
                           <div>
                             <div className="font-semibold">{material.name || material.item}</div>
                             {material.count && (
