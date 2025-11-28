@@ -4,6 +4,7 @@ import { Send, Edit3, Trash2, Flag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, mockComments } from '../lib/demoData';
+import ReportModal from './ReportModal';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { getMinecraftMobAvatar } from '../lib/avatarUtils';
 
@@ -143,12 +144,13 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
     }
   };
 
-  const handleReport = (_commentId: string) => {
+  const handleReport = (commentId: string) => {
     if (!user) {
       alert('Please sign in to report comments.');
       return;
     }
-    alert('Report functionality - to be implemented');
+    setReportingCommentId(commentId);
+    setShowReportModal(true);
   };
 
   return (

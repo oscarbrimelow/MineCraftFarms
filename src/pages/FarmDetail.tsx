@@ -18,6 +18,7 @@ import { isDemoMode, mockFarms } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import CommentsSection from '../components/CommentsSection';
 import StepsEditor from '../components/StepsEditor';
+import ReportModal from '../components/ReportModal';
 import { getMinecraftMobAvatar, getYouTubeThumbnail, getYouTubeVideoId } from '../lib/avatarUtils';
 import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
 
@@ -34,6 +35,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
   const [shareCopied, setShareCopied] = useState(false);
   const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
   const [loadingCreator, setLoadingCreator] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -168,8 +170,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
       navigate('/account');
       return;
     }
-    // Open report modal or navigate to report page
-    alert('Report functionality - to be implemented');
+    setShowReportModal(true);
   };
 
   // Extract YouTube channel info from video URL
