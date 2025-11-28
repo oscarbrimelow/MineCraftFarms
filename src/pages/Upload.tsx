@@ -61,6 +61,8 @@ export default function Upload({ user }: UploadProps) {
 
   const [newRequiredMaterial, setNewRequiredMaterial] = useState({ name: '', count: '' });
   const [newOptionalMaterial, setNewOptionalMaterial] = useState({ name: '', count: '' });
+  const [pasteMaterialsText, setPasteMaterialsText] = useState('');
+  const [pasteResult, setPasteResult] = useState<{ added: number; failed: string[] } | null>(null);
   const [newTag, setNewTag] = useState('');
   const [newVersion, setNewVersion] = useState('');
   const [newDropRate, setNewDropRate] = useState({ item: '', rate: '' });
@@ -288,6 +290,114 @@ export default function Upload({ user }: UploadProps) {
       ...prev,
       versions: prev.versions.filter((v) => v !== version),
     }));
+  };
+
+  const handlePasteMaterials = () => {
+    if (!pasteMaterialsText.trim()) return;
+
+    const lines = pasteMaterialsText.split('\n').map(line => line.trim()).filter(line => line);
+    const added: Array<{ name: string; count: number }> = [];
+    const failed: string[] = [];
+
+    // Helper function to find matching Minecraft item
+    const findMatchingItem = (itemName: string): string | null => {
+      const normalized = itemName.toLowerCase().trim();
+      
+      // Try exact match first (case-insensitive)
+      const exactMatch = MINECRAFT_ITEMS.find(item => item.toLowerCase() === normalized);
+      if (exactMatch) return exactMatch;
+
+      // Try removing common suffixes/plurals
+      const withoutSuffixes = normalized
+        .replace(/\s+blocks?$/i, '')
+        .replace(/\s+block$/i, '')
+        .replace(/\s+buckets?$/i, '')
+        .replace(/\s+bucket$/i, '')
+        .replace(/\s+slabs?$/i, '')
+        .replace(/\s+slab$/i, '')
+        .replace(/\s+trapdoors?$/i, '')
+        .replace(/\s+trapdoor$/i, '')
+        .replace(/\s+chests?$/i, '')
+        .replace(/\s+chest$/i, '')
+        .replace(/\s+hoppers?$/i, '')
+        .replace(/\s+hopper$/i, '')
+        .replace(/\s+signs?$/i, '')
+        .replace(/\s+sign$/i, '')
+        .replace(/\s+torches?$/i, '')
+        .replace(/\s+torch$/i, '')
+        .replace(/\s+repeaters?$/i, '')
+        .replace(/\s+repeater$/i, '')
+        .replace(/\s+pistons?$/i, '')
+        .replace(/\s+piston$/i, '')
+        .replace(/\s+levers?$/i, '')
+        .replace(/\s+lever$/i, '')
+        .trim();
+
+      // Try matching without suffixes
+      const suffixMatch = MINECRAFT_ITEMS.find(item => 
+        item.toLowerCase() === withoutSuffixes ||
+        item.toLowerCase().includes(withoutSuffixes) ||
+        withoutSuffixes.includes(item.toLowerCase())
+      );
+      if (suffixMatch) return suffixMatch;
+
+      // Try partial match
+      const partialMatch = MINECRAFT_ITEMS.find(item => 
+        item.toLowerCase().includes(normalized) ||
+        normalized.includes(item.toLowerCase())
+      );
+      if (partialMatch) return partialMatch;
+
+      return null;
+    };
+
+    lines.forEach((line) => {
+      // Match pattern: number followed by item name
+      const match = line.match(/^(\d+)\s+(.+)$/i);
+      if (!match) {
+        failed.push(line);
+        return;
+      }
+
+      const count = parseInt(match[1]);
+      const itemName = match[2].trim();
+      
+      if (isNaN(count) || count <= 0) {
+        failed.push(line);
+        return;
+      }
+
+      const matchedItem = findMatchingItem(itemName);
+      if (matchedItem) {
+        added.push({ name: matchedItem, count });
+      } else {
+        failed.push(line);
+      }
+    });
+
+    // Add successfully matched items
+    if (added.length > 0) {
+      const updatedMaterials = [...formData.materials];
+      added.forEach(({ name, count }) => {
+        const existingIndex = updatedMaterials.findIndex((m) => m.name === name);
+        if (existingIndex >= 0) {
+          updatedMaterials[existingIndex].count += count;
+        } else {
+          updatedMaterials.push({ name, count });
+        }
+      });
+      setFormData((prev) => ({
+        ...prev,
+        materials: updatedMaterials,
+      }));
+    }
+
+    // Show results
+    setPasteResult({ added: added.length, failed });
+    setPasteMaterialsText('');
+
+    // Clear result after 5 seconds
+    setTimeout(() => setPasteResult(null), 5000);
   };
 
   const handleAddMaterial = (optional = false) => {
