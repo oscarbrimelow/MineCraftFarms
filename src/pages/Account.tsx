@@ -47,13 +47,27 @@ export default function Account({ user: initialUser }: AccountProps) {
       .single();
 
     if (data) {
+      const changedAt = data.username_changed_at || data.created_at;
       setProfileData((prev) => ({
         ...prev,
         username: data.username || '',
         bio: data.bio || '',
         avatar_url: data.avatar_url || '',
-        username_changed_at: data.username_changed_at || data.created_at || '',
+        username_changed_at: changedAt || '',
       }));
+
+      // Calculate days until username can be changed
+      if (changedAt) {
+        const lastChanged = new Date(changedAt);
+        const daysSinceChange = (Date.now() - lastChanged.getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceChange < 14) {
+          setDaysUntilCanChangeUsername(Math.ceil(14 - daysSinceChange));
+        } else {
+          setDaysUntilCanChangeUsername(0);
+        }
+      } else {
+        setDaysUntilCanChangeUsername(0);
+      }
     }
   };
 
@@ -402,13 +416,25 @@ export default function Account({ user: initialUser }: AccountProps) {
             <div className="flex-1">
               {editingProfile ? (
                 <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={profileData.username}
-                    onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border-2 border-minecraft-green focus:outline-none focus:ring-2 focus:ring-minecraft-green font-bold text-xl"
-                    placeholder="Username"
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      value={profileData.username}
+                      onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-minecraft-green focus:outline-none focus:ring-2 focus:ring-minecraft-green font-bold text-xl"
+                      placeholder="Username"
+                    />
+                    {daysUntilCanChangeUsername !== null && daysUntilCanChangeUsername > 0 && (
+                      <p className="text-sm text-orange-600 mt-2 font-medium">
+                        ⚠️ You can only change your username every 14 days. {daysUntilCanChangeUsername} day{daysUntilCanChangeUsername !== 1 ? 's' : ''} remaining until you can change it again.
+                      </p>
+                    )}
+                    {daysUntilCanChangeUsername === 0 && (
+                      <p className="text-sm text-gray-600 mt-2">
+                        ℹ️ You can change your username, but once changed, you'll need to wait 14 days before changing it again.
+                      </p>
+                    )}
+                  </div>
                   <textarea
                     value={profileData.bio}
                     onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
@@ -449,6 +475,11 @@ export default function Account({ user: initialUser }: AccountProps) {
                     {profileData.username || user.email?.split('@')[0] || 'User'}
                   </h1>
                   <p className="text-gray-600 mb-4">{profileData.bio || 'No bio yet'}</p>
+                  {daysUntilCanChangeUsername !== null && daysUntilCanChangeUsername > 0 && (
+                    <p className="text-sm text-orange-600 mb-3 font-medium">
+                      ⚠️ Username can only be changed every 14 days. {daysUntilCanChangeUsername} day{daysUntilCanChangeUsername !== 1 ? 's' : ''} remaining.
+                    </p>
+                  )}
                   <button
                     onClick={() => setEditingProfile(true)}
                     className="flex items-center space-x-2 px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark"
