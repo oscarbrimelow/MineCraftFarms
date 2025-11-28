@@ -21,7 +21,9 @@
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    // Redirect to index.html which will load the correct assets
+    window.location.replace(window.location.pathname.split('/').slice(0, 2).join('/') + '/index.html' + window.location.search + window.location.hash);
+  </script>
 </body>
 </html>
-
