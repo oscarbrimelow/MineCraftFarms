@@ -5,7 +5,7 @@ import { isDemoMode } from './lib/demoData';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import DemoBanner from './components/DemoBanner';
-import TipBox from './components/TipBox';
+import DonationBox from './components/DonationBox';
 import Home from './pages/Home';
 import Browse from './pages/Browse';
 import FarmDetail from './pages/FarmDetail';
@@ -75,7 +75,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
-      <TipBox position="bottom-right" autoShow={true} delay={5000} />
+      <DonationBox position="bottom-right" donationUrl="https://ko-fi.com" />
     </div>
   );
 }
