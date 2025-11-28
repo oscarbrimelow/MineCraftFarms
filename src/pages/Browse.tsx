@@ -90,11 +90,23 @@ export default function Browse() {
       }
 
       const { data, error } = await query;
+      
+      // Add author_id to each farm for avatar generation
+      const farmsWithAuthorId = (data || []).map((farm: any) => ({
+        ...farm,
+        author_id: farm.author_id || (farm.users as any)?.id,
+      }));
 
       if (error) throw error;
       
+      // Add author_id to each farm for avatar generation
+      const farmsWithAuthorId = (data || []).map((farm: any) => ({
+        ...farm,
+        author_id: farm.author_id,
+      }));
+      
       // Filter by platform client-side (more reliable than contains for arrays)
-      let filteredData = data || [];
+      let filteredData = farmsWithAuthorId;
       
       if (selectedPlatform) {
         filteredData = filteredData.filter((farm) =>

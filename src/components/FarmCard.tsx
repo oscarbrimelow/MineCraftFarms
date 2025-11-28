@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, ThumbsUp, Tag, Video } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { getMinecraftMobAvatar } from '../lib/avatarUtils';
 
 interface FarmCardProps {
   farm: {
@@ -21,6 +22,7 @@ interface FarmCardProps {
       username: string;
       avatar_url: string | null;
     };
+    author_id?: string;
   };
   index?: number;
 }
@@ -121,11 +123,11 @@ export default function FarmCard({ farm, index = 0 }: FarmCardProps) {
                 <img
                   src={farm.author.avatar_url}
                   alt={farm.author.username}
-                  className="w-6 h-6 rounded-full"
+                  className="w-6 h-6 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-minecraft-green flex items-center justify-center text-white text-xs">
-                  {farm.author.username[0].toUpperCase()}
+                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-lg">
+                  {getMinecraftMobAvatar((farm as any).author_id || farm.author.username)}
                 </div>
               )}
               <span className="text-xs text-gray-600">by {farm.author.username}</span>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Upload, Heart, Edit3, Save, X, Trash2 } from 'lucide-react';
+import { Mail, Lock, Upload, Heart, Edit3, Save, X, Trash2, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import FarmCard from '../components/FarmCard';
+import { getMinecraftMobAvatar } from '../lib/avatarUtils';
 
 interface AccountProps {
   user: SupabaseUser | null;
@@ -24,6 +25,7 @@ export default function Account({ user: initialUser }: AccountProps) {
     username_changed_at: '',
   });
   const [daysUntilCanChangeUsername, setDaysUntilCanChangeUsername] = useState<number | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [authData, setAuthData] = useState({
     email: '',
@@ -250,6 +252,76 @@ export default function Account({ user: initialUser }: AccountProps) {
     navigate('/');
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 2MB for avatars)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Avatar image must be smaller than 2MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const fileName = `avatar_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      // Delete old avatar if it exists
+      const oldAvatarPath = profileData.avatar_url?.split('/').pop();
+      if (oldAvatarPath && profileData.avatar_url?.includes(user.id)) {
+        try {
+          await supabase.storage
+            .from('farm-images')
+            .remove([`${user.id}/${oldAvatarPath}`]);
+        } catch (error) {
+          console.error('Error deleting old avatar:', error);
+        }
+      }
+
+      // Upload new avatar
+      const { data, error: uploadError } = await supabase.storage
+        .from('farm-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('farm-images')
+        .getPublicUrl(data.path);
+
+      // Update profile data
+      setProfileData(prev => ({
+        ...prev,
+        avatar_url: publicUrl,
+      }));
+
+      // Auto-save the avatar
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      alert(error.message || 'Failed to upload avatar. Please try again.');
+    } finally {
+      setUploadingAvatar(false);
+      // Reset file input
+      e.target.value = '';
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
     setLoading(true);
@@ -422,11 +494,11 @@ export default function Account({ user: initialUser }: AccountProps) {
               <img
                 src={profileData.avatar_url}
                 alt={profileData.username}
-                className="w-24 h-24 rounded-full border-4 border-minecraft-green"
+                className="w-24 h-24 rounded-full border-4 border-minecraft-green object-cover"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-minecraft-green flex items-center justify-center text-white text-3xl font-bold border-4 border-minecraft-green">
-                {profileData.username[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
+              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-5xl border-4 border-minecraft-green">
+                {getMinecraftMobAvatar(user?.id)}
               </div>
             )}
             <div className="flex-1">
@@ -458,13 +530,65 @@ export default function Account({ user: initialUser }: AccountProps) {
                     placeholder="Bio"
                     rows={3}
                   />
-                  <input
-                    type="url"
-                    value={profileData.avatar_url}
-                    onChange={(e) => setProfileData({ ...profileData, avatar_url: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
-                    placeholder="Avatar URL"
-                  />
+                  <div>
+                    <label className="block font-semibold mb-2">Profile Picture</label>
+                    <div className="flex items-center space-x-4">
+                      {profileData.avatar_url ? (
+                        <img
+                          src={profileData.avatar_url}
+                          alt="Avatar preview"
+                          className="w-16 h-16 rounded-full object-cover border-2 border-minecraft-green"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-3xl border-2 border-minecraft-green">
+                          {getMinecraftMobAvatar(user?.id)}
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                            disabled={uploadingAvatar}
+                            className="hidden"
+                          />
+                          <div className="flex items-center space-x-2 px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark transition-colors cursor-pointer disabled:opacity-50">
+                            <ImageIcon size={18} />
+                            <span>{uploadingAvatar ? 'Uploading...' : 'Upload Picture'}</span>
+                          </div>
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">Max 2MB. JPG, PNG, or GIF</p>
+                      </div>
+                      {profileData.avatar_url && (
+                        <button
+                          onClick={async () => {
+                            if (!user) return;
+                            try {
+                              // Delete from storage
+                              const oldAvatarPath = profileData.avatar_url?.split('/').pop();
+                              if (oldAvatarPath && profileData.avatar_url?.includes(user.id)) {
+                                await supabase.storage
+                                  .from('farm-images')
+                                  .remove([`${user.id}/${oldAvatarPath}`]);
+                              }
+                              // Clear from database
+                              await supabase
+                                .from('users')
+                                .update({ avatar_url: null })
+                                .eq('id', user.id);
+                              setProfileData(prev => ({ ...prev, avatar_url: '' }));
+                            } catch (error) {
+                              console.error('Error removing avatar:', error);
+                            }
+                          }}
+                          className="px-3 py-1 text-sm text-red-600 hover:text-red-700 underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <button
                       onClick={handleSaveProfile}

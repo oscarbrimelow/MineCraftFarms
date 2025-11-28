@@ -207,11 +207,11 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                     <img
                       src={comment.users.avatar_url}
                       alt={comment.users.username}
-                      className="w-10 h-10 rounded-full"
+                      className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-minecraft-green flex items-center justify-center text-white font-bold">
-                      {comment.users?.username?.[0]?.toUpperCase() || '?'}
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-2xl">
+                      {getMinecraftMobAvatar(comment.user_id)}
                     </div>
                   )}
                   <div className="flex-1">
@@ -294,11 +294,11 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                           <img
                             src={reply.users.avatar_url}
                             alt={reply.users.username}
-                            className="w-8 h-8 rounded-full"
+                            className="w-8 h-8 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-minecraft-indigo flex items-center justify-center text-white text-xs font-bold">
-                            {reply.users?.username?.[0]?.toUpperCase() || '?'}
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xl">
+                            {getMinecraftMobAvatar(reply.user_id)}
                           </div>
                         )}
                         <div className="flex-1">

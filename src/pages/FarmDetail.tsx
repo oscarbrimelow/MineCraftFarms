@@ -19,6 +19,7 @@ import { isDemoMode, mockFarms } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import CommentsSection from '../components/CommentsSection';
 import StepsEditor from '../components/StepsEditor';
+import { getMinecraftMobAvatar } from '../lib/avatarUtils';
 
 interface FarmDetailProps {
   user: SupabaseUser | null;
@@ -482,11 +483,11 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                   <img
                     src={farm.users.avatar_url}
                     alt={farm.users.username}
-                    className="w-12 h-12 rounded-full"
+                    className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-minecraft-green flex items-center justify-center text-white font-bold">
-                    {farm.users?.username?.[0]?.toUpperCase() || '?'}
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-3xl">
+                    {getMinecraftMobAvatar(farm.author_id)}
                   </div>
                 )}
                 <div>
