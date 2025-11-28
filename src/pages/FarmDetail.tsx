@@ -10,6 +10,7 @@ import {
   Play,
   Edit3,
   Trash2,
+  Download,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
