@@ -75,6 +75,9 @@ export default function Upload({ user }: UploadProps) {
   const [loadingCreator, setLoadingCreator] = useState(false);
 
   useEffect(() => {
+    // Scroll to top when page loads
+    window.scrollTo(0, 0);
+    
     if (editId && user) {
       fetchFarm();
     }
@@ -1481,6 +1484,24 @@ export default function Upload({ user }: UploadProps) {
                 <UploadIcon size={20} />
                 <span>{uploading ? 'Saving...' : editId ? 'Update Farm' : 'Publish Farm'}</span>
               </button>
+            </div>
+
+            {/* Bulk Import Link */}
+            <div className="mt-8 p-6 bg-gradient-to-r from-minecraft-indigo/10 to-minecraft-green/10 rounded-xl border-2 border-minecraft-indigo/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Import Multiple Farms?</h3>
+                  <p className="text-gray-600">
+                    Use bulk import to upload multiple farms at once from a CSV or JSON file.
+                  </p>
+                </div>
+                <Link
+                  to="/bulk-import"
+                  className="px-6 py-3 bg-minecraft-indigo text-white rounded-lg font-semibold hover:bg-minecraft-indigo-dark transition-colors whitespace-nowrap"
+                >
+                  Go to Bulk Import
+                </Link>
+              </div>
             </div>
           </div>
         )}
