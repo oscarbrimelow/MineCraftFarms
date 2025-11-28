@@ -47,12 +47,13 @@ export default function Account({ user: initialUser }: AccountProps) {
       .single();
 
     if (data) {
-      setProfileData({
+      setProfileData((prev) => ({
+        ...prev,
         username: data.username || '',
         bio: data.bio || '',
         avatar_url: data.avatar_url || '',
         username_changed_at: data.username_changed_at || data.created_at || '',
-      });
+      }));
     }
   };
 
