@@ -33,6 +33,10 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchComments();
@@ -349,6 +353,17 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
           </AnimatePresence>
         </div>
       )}
+
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => {
+          setShowReportModal(false);
+          setReportingCommentId(null);
+        }}
+        user={user}
+        itemType="comment"
+        itemId={reportingCommentId || ''}
+      />
     </div>
   );
 }
