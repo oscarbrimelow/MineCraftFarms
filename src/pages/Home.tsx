@@ -51,8 +51,24 @@ export default function Home() {
   };
 
   const platforms = [
-    { name: 'Java', color: 'bg-blue-500', icon: '☕' },
-    { name: 'Bedrock', color: 'bg-green-500', icon: '🧱' },
+    { 
+      name: 'Java', 
+      color: 'from-blue-500 to-blue-700', 
+      hoverColor: 'from-blue-600 to-blue-800',
+      icon: '☕',
+      description: 'Classic Minecraft experience',
+      accent: 'bg-blue-400',
+      glow: 'shadow-blue-500/50'
+    },
+    { 
+      name: 'Bedrock', 
+      color: 'from-green-500 to-green-700', 
+      hoverColor: 'from-green-600 to-green-800',
+      icon: '🧱',
+      description: 'Cross-platform edition',
+      accent: 'bg-green-400',
+      glow: 'shadow-green-500/50'
+    },
   ];
 
   const tags = [
@@ -138,26 +154,106 @@ export default function Home() {
       </section>
 
       {/* Platform Quick Filters */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-display text-center mb-8 text-gray-900">
-            Browse by Platform
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <section className="py-16 bg-gradient-to-b from-white via-gray-50 to-white relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 w-32 h-32 bg-blue-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 right-10 w-40 h-40 bg-green-500 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-minecraft-indigo rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-5xl md:text-6xl font-display text-gray-900 mb-4">
+              Browse by Platform
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Choose your Minecraft edition and discover amazing farms
+            </p>
+          </motion.div>
+          
+          <div className="flex flex-col md:flex-row gap-8 justify-center items-center">
             {platforms.map((platform, index) => (
               <motion.div
                 key={platform.name}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.05, y: -4 }}
+                initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ 
+                  delay: index * 0.2,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                whileHover={{ 
+                  scale: 1.08, 
+                  y: -12,
+                  rotate: [0, -2, 2, -2, 2, 0],
+                }}
+                className="w-full md:w-[400px]"
               >
                 <Link
                   to={`/farms?platform=${platform.name.toLowerCase()}`}
-                  className={`${platform.color} text-white p-6 rounded-xl shadow-minecraft-sm hover:shadow-minecraft transition-all text-center block`}
+                  className="group relative block"
                 >
-                  <div className="text-4xl mb-2">{platform.icon}</div>
-                  <div className="font-bold">{platform.name}</div>
+                  {/* Glow effect */}
+                  <div className={`absolute -inset-1 bg-gradient-to-r ${platform.color} rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition-opacity ${platform.glow}`}></div>
+                  
+                  {/* Main card */}
+                  <div className={`relative bg-gradient-to-br ${platform.color} rounded-2xl p-8 shadow-2xl transform transition-all duration-300 group-hover:shadow-3xl`}>
+                    {/* Decorative corner elements */}
+                    <div className="absolute top-0 left-0 w-20 h-20 bg-white/10 rounded-br-full"></div>
+                    <div className="absolute bottom-0 right-0 w-20 h-20 bg-white/10 rounded-tl-full"></div>
+                    
+                    {/* Icon with animated background */}
+                    <div className="relative mb-6 flex justify-center">
+                      <div className={`absolute inset-0 ${platform.accent} rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity`}></div>
+                      <motion.div
+                        className="relative text-8xl mb-4"
+                        animate={{
+                          y: [0, -10, 0],
+                          rotate: [0, 5, -5, 0],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          delay: index * 0.5,
+                        }}
+                      >
+                        {platform.icon}
+                      </motion.div>
+                    </div>
+                    
+                    {/* Platform name */}
+                    <h3 className="text-4xl font-display font-bold text-white text-center mb-3 drop-shadow-lg">
+                      {platform.name}
+                    </h3>
+                    
+                    {/* Description */}
+                    <p className="text-white/90 text-center mb-6 text-lg">
+                      {platform.description}
+                    </p>
+                    
+                    {/* CTA Arrow */}
+                    <div className="flex justify-center">
+                      <motion.div
+                        className="bg-white/20 backdrop-blur-sm rounded-full p-3 group-hover:bg-white/30 transition-colors"
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        <ArrowRight 
+                          className="text-white w-6 h-6 group-hover:translate-x-2 transition-transform" 
+                        />
+                      </motion.div>
+                    </div>
+                    
+                    {/* Animated border */}
+                    <div className="absolute inset-0 rounded-2xl border-2 border-white/20 group-hover:border-white/40 transition-colors"></div>
+                  </div>
                 </Link>
               </motion.div>
             ))}
