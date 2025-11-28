@@ -475,6 +475,32 @@ export default function FarmDetail({ user }: FarmDetailProps) {
               </div>
             )}
 
+            {/* Schematic Download */}
+            {farm.schematic_url && (
+              <div className="bg-white rounded-xl shadow-minecraft p-6">
+                <h2 className="text-2xl font-bold mb-4">Litematica Schematic</h2>
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-minecraft-green/10 to-minecraft-indigo/10 rounded-lg border-2 border-minecraft-green/20">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-minecraft-green rounded-lg">
+                      <Download className="text-white" size={24} />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900">Download Schematic</div>
+                      <div className="text-sm text-gray-600">Litematica schematic file available</div>
+                    </div>
+                  </div>
+                  <a
+                    href={farm.schematic_url}
+                    download
+                    className="px-6 py-3 bg-minecraft-green text-white rounded-lg font-semibold hover:bg-minecraft-green-dark transition-colors flex items-center space-x-2"
+                  >
+                    <Download size={18} />
+                    <span>Download</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
             {/* Materials */}
             <div className="bg-white rounded-xl shadow-minecraft p-6">
               <h2 className="text-2xl font-bold mb-4">Required Materials</h2>
