@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Heart, Coffee } from 'lucide-react';
 
@@ -16,13 +16,13 @@ export default function DonationBox({
   const [dismissed, setDismissed] = useState(false);
 
   // Check if user has dismissed the donation box before
-  useState(() => {
+  useEffect(() => {
     const saved = localStorage.getItem('donationBoxDismissed');
     if (saved === 'true') {
       setDismissed(true);
       setIsVisible(false);
     }
-  });
+  }, []);
 
   const handleDismiss = () => {
     setDismissed(true);
