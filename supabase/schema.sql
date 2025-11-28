@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS farms (
   drop_rate_per_hour JSONB DEFAULT '[]'::jsonb,
   farmable_items TEXT[] DEFAULT ARRAY[]::TEXT[],
   required_biome TEXT,
-  category TEXT
+  category TEXT,
+  schematic_url TEXT
 );
 
 -- Comments table

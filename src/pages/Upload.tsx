@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Upload as UploadIcon, X, Eye, Video } from 'lucide-react';
+import { Upload as UploadIcon, X, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { isDemoMode } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import YouTubeCaptionExtractor from '../components/YouTubeCaptionExtractor';
 import MaterialAutocomplete from '../components/MaterialAutocomplete';
+import CategoryAutocomplete from '../components/CategoryAutocomplete';
 import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
 import { getYouTubeVideoId } from '../lib/avatarUtils';
@@ -56,6 +56,7 @@ export default function Upload({ user }: UploadProps) {
     farmable_items: [] as string[],
     required_biome: '',
     category: '',
+    schematic_url: '',
     public: true,
   });
 
@@ -70,7 +71,8 @@ export default function Upload({ user }: UploadProps) {
   const [preview, setPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
-  const [showCaptionExtractor, setShowCaptionExtractor] = useState(false);
+  const [schematicFile, setSchematicFile] = useState<File | null>(null);
+  const [uploadingSchematic, setUploadingSchematic] = useState(false);
   const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
   const [loadingCreator, setLoadingCreator] = useState(false);
 
@@ -154,6 +156,7 @@ export default function Upload({ user }: UploadProps) {
         farmable_items: data.farmable_items || [],
         required_biome: data.required_biome || '',
         category: data.category || '',
+        schematic_url: data.schematic_url || '',
         public: data.public,
       });
       setImages(data.images || []);
@@ -528,6 +531,49 @@ export default function Upload({ user }: UploadProps) {
     }));
   };
 
+  const handleSchematicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploadingSchematic(true);
+    try {
+      // Validate file type (.litematic or .schematic)
+      const validExtensions = ['.litematic', '.schematic'];
+      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+      if (!validExtensions.includes(fileExtension)) {
+        throw new Error('Please upload a .litematic or .schematic file');
+      }
+
+      // Validate file size (max 50MB for schematics)
+      if (file.size > 50 * 1024 * 1024) {
+        throw new Error('Schematic file is too large. Maximum size is 50MB');
+      }
+
+      const fileName = `${user.id}/schematics/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      
+      const { data, error } = await supabase.storage
+        .from('farm-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('farm-images')
+        .getPublicUrl(data.path);
+
+      setFormData((prev) => ({ ...prev, schematic_url: publicUrl }));
+      setSchematicFile(null);
+    } catch (error: any) {
+      console.error('Error uploading schematic:', error);
+      alert(error.message || 'Failed to upload schematic');
+    } finally {
+      setUploadingSchematic(false);
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || !user) return;
@@ -657,6 +703,7 @@ export default function Upload({ user }: UploadProps) {
         farmable_items: formData.farmable_items.length > 0 ? formData.farmable_items : [],
         required_biome: formData.required_biome || null,
         category: formData.category || null,
+        schematic_url: formData.schematic_url || null,
         public: formData.public,
         slug,
         ...(editId ? {} : { author_id: user?.id, upvotes_count: 0 }),
@@ -765,19 +812,12 @@ export default function Upload({ user }: UploadProps) {
               <h2 className="text-2xl font-bold mb-4">Farm Category</h2>
               <div>
                 <label className="block font-semibold mb-2">Category *</label>
-                <select
+                <CategoryAutocomplete
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
+                  onChange={(value) => setFormData({ ...formData, category: value })}
+                  placeholder="Search farm category..."
                   required
-                >
-                  <option value="">Select a farm category...</option>
-                  {FARM_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
+                />
                 <p className="text-sm text-gray-600 mt-2">
                   Choose the category that best describes this farm design.
                 </p>
@@ -952,15 +992,51 @@ export default function Upload({ user }: UploadProps) {
                 
                 {formData.video_url && (
                   <div>
-                    <button
-                      onClick={() => setShowCaptionExtractor(true)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-minecraft-indigo text-white rounded-lg hover:bg-minecraft-indigo-dark"
-                    >
-                      <Video size={18} />
-                      <span>Extract Steps from Video</span>
-                    </button>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Schematic Upload */}
+            <div className="bg-white rounded-xl shadow-minecraft p-6">
+              <h2 className="text-2xl font-bold mb-4">Litematica Schematic (Optional)</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block font-semibold mb-2">Upload Schematic File</label>
+                  <input
+                    type="file"
+                    accept=".litematic,.schematic"
+                    onChange={handleSchematicUpload}
+                    disabled={uploadingSchematic}
+                    className="mb-2"
+                  />
+                  {uploadingSchematic && (
+                    <p className="text-sm text-gray-600">Uploading schematic...</p>
+                  )}
+                  {formData.schematic_url && (
+                    <div className="mt-2 p-3 bg-green-50 rounded-lg border-2 border-green-200">
+                      <p className="text-sm text-green-700 font-semibold mb-1">✓ Schematic uploaded</p>
+                      <a
+                        href={formData.schematic_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-green-600 hover:underline"
+                      >
+                        View/Download Schematic
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, schematic_url: '' }))}
+                        className="ml-4 text-sm text-red-600 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-600 mt-2">
+                    Upload a .litematic or .schematic file for users to download. Maximum size: 50MB.
+                  </p>
+                </div>
               </div>
             </div>
 
