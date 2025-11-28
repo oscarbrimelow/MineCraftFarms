@@ -3,8 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ThumbsUp,
   Clock,
-  Copy,
-  Check,
   Tag,
   Share2,
   Flag,
@@ -31,7 +29,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
   const [farm, setFarm] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [upvoted, setUpvoted] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [checkedMaterials, setCheckedMaterials] = useState<Set<number>>(new Set());
   const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
   const [loadingCreator, setLoadingCreator] = useState(false);
   const navigate = useNavigate();
@@ -132,10 +130,16 @@ export default function FarmDetail({ user }: FarmDetailProps) {
     }
   };
 
-  const handleCopy = async (text: string, id: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
+  const handleMaterialToggle = (index: number) => {
+    setCheckedMaterials((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   };
 
   const handleShare = async () => {
@@ -503,18 +507,12 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                         )}
                       </div>
                     </div>
-                    <button
-                      onClick={() =>
-                        handleCopy(`${material.name || material.item} x${material.count || 1}`, `mat-${index}`)
-                      }
-                      className="p-2 hover:bg-gray-200 rounded transition-colors"
-                    >
-                      {copied === `mat-${index}` ? (
-                        <Check className="text-green-600" size={18} />
-                      ) : (
-                        <Copy size={18} />
-                      )}
-                    </button>
+                    <input
+                      type="checkbox"
+                      checked={checkedMaterials.has(index)}
+                      onChange={() => handleMaterialToggle(index)}
+                      className="w-5 h-5 text-minecraft-green rounded focus:ring-minecraft-green cursor-pointer"
+                    />
                   </div>
                 ))}
               </div>
