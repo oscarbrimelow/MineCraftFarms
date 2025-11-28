@@ -55,6 +55,7 @@ export type Database = {
           avatar_url: string | null;
           bio: string | null;
           created_at: string;
+          username_changed_at: string | null;
           role: 'user' | 'moderator' | 'admin';
         };
       };

@@ -74,14 +74,6 @@ export default function Browse() {
         .select('*, users:author_id(username, avatar_url)')
         .eq('public', true);
 
-      if (selectedPlatform) {
-        query = query.contains('platform', [selectedPlatform]);
-      }
-
-      if (selectedTag) {
-        query = query.contains('tags', [selectedTag]);
-      }
-
       // Apply sorting
       switch (selectedSort) {
         case 'upvotes':
@@ -100,7 +92,25 @@ export default function Browse() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setFarms(data || []);
+      
+      // Filter by platform client-side (more reliable than contains for arrays)
+      let filteredData = data || [];
+      
+      if (selectedPlatform) {
+        filteredData = filteredData.filter((farm) =>
+          farm.platform?.some((p: string) => 
+            p.toLowerCase() === selectedPlatform.toLowerCase()
+          )
+        );
+      }
+
+      if (selectedTag) {
+        filteredData = filteredData.filter((farm) =>
+          farm.tags?.includes(selectedTag.toLowerCase())
+        );
+      }
+
+      setFarms(filteredData);
     } catch (error) {
       console.error('Error fetching farms:', error);
     } finally {

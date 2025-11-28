@@ -212,27 +212,44 @@ export default function Upload({ user }: UploadProps) {
     const files = e.target.files;
     if (!files || !user) return;
 
-    const uploadPromises = Array.from(files).map(async (file) => {
-      const fileName = `${user.id}/${Date.now()}_${file.name}`;
-      const { error } = await supabase.storage
-        .from('farm-images')
-        .upload(fileName, file);
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('farm-images')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    });
-
     try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`${file.name} is not an image file`);
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`${file.name} is too large. Maximum size is 5MB`);
+        }
+
+        const fileName = `${user.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        
+        const { data, error } = await supabase.storage
+          .from('farm-images')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          console.error('Upload error:', error);
+          throw error;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('farm-images')
+          .getPublicUrl(data.path);
+
+        return publicUrl;
+      });
+
       const urls = await Promise.all(uploadPromises);
       setImages([...images, ...urls]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading images:', error);
-      alert('Failed to upload images. Please try again.');
+      alert(error.message || 'Failed to upload images. Please check that the storage bucket exists and you have permission.');
     }
   };
 

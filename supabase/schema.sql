@@ -109,11 +109,12 @@ CREATE TRIGGER update_farm_search_vector_trigger
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (id, email, username)
+  INSERT INTO public.users (id, email, username, username_changed_at)
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1))
+    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+    NOW()
   );
   RETURN NEW;
 END;

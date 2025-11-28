@@ -26,6 +26,7 @@ export default function Account({ user: initialUser }: AccountProps) {
   const [authData, setAuthData] = useState({
     email: '',
     password: '',
+    username: '',
     signUp: false,
   });
 
@@ -50,6 +51,7 @@ export default function Account({ user: initialUser }: AccountProps) {
         username: data.username || '',
         bio: data.bio || '',
         avatar_url: data.avatar_url || '',
+        username_changed_at: data.username_changed_at || data.created_at || '',
       });
     }
   };
@@ -104,22 +106,58 @@ export default function Account({ user: initialUser }: AccountProps) {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate username
+    if (!authData.username.trim()) {
+      alert('Please enter a username');
+      return;
+    }
+
+    if (authData.username.length < 3) {
+      alert('Username must be at least 3 characters');
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(authData.username)) {
+      alert('Username can only contain letters, numbers, underscores, and hyphens');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Check if username is already taken
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', authData.username.trim())
+        .single();
+
+      if (existingUser) {
+        alert('Username is already taken. Please choose another.');
+        setLoading(false);
+        return;
+      }
+
       const { data: auth, error: authError } = await supabase.auth.signUp({
         email: authData.email,
         password: authData.password,
+        options: {
+          data: {
+            username: authData.username.trim(),
+          },
+        },
       });
 
       if (authError) throw authError;
 
       if (auth.user) {
-        // Create user profile
+        // Create user profile with chosen username
         const { error: profileError } = await supabase.from('users').insert({
           id: auth.user.id,
           email: auth.user.email,
-          username: auth.user.email?.split('@')[0] || 'user',
+          username: authData.username.trim(),
           role: 'user',
+          username_changed_at: new Date().toISOString(),
         });
 
         if (profileError) throw profileError;
@@ -142,13 +180,67 @@ export default function Account({ user: initialUser }: AccountProps) {
     if (!user) return;
     setLoading(true);
     try {
+      // Check if username changed
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('username, username_changed_at, created_at')
+        .eq('id', user.id)
+        .single();
+
+      const updateData: any = {
+        bio: profileData.bio,
+        avatar_url: profileData.avatar_url,
+      };
+
+      // Check if username changed and if 14 days have passed
+      if (currentUser && profileData.username !== currentUser.username) {
+        const lastChanged = currentUser.username_changed_at 
+          ? new Date(currentUser.username_changed_at)
+          : new Date(currentUser.created_at);
+        
+        const daysSinceChange = (Date.now() - lastChanged.getTime()) / (1000 * 60 * 60 * 24);
+        
+        if (daysSinceChange < 14) {
+          const daysRemaining = Math.ceil(14 - daysSinceChange);
+          alert(`You can only change your username every 14 days. Please wait ${daysRemaining} more day(s).`);
+          setLoading(false);
+          return;
+        }
+
+        // Validate new username
+        if (profileData.username.length < 3) {
+          alert('Username must be at least 3 characters');
+          setLoading(false);
+          return;
+        }
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(profileData.username)) {
+          alert('Username can only contain letters, numbers, underscores, and hyphens');
+          setLoading(false);
+          return;
+        }
+
+        // Check if username is already taken
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('username')
+          .eq('username', profileData.username.trim())
+          .neq('id', user.id)
+          .single();
+
+        if (existingUser) {
+          alert('Username is already taken. Please choose another.');
+          setLoading(false);
+          return;
+        }
+
+        updateData.username = profileData.username.trim();
+        updateData.username_changed_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from('users')
-        .update({
-          username: profileData.username,
-          bio: profileData.bio,
-          avatar_url: profileData.avatar_url,
-        })
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) throw error;
@@ -185,6 +277,26 @@ export default function Account({ user: initialUser }: AccountProps) {
                   />
                 </div>
               </div>
+
+              {authData.signUp && (
+                <div>
+                  <label className="block font-semibold mb-2">Username *</label>
+                  <input
+                    type="text"
+                    value={authData.username}
+                    onChange={(e) => setAuthData({ ...authData, username: e.target.value })}
+                    required
+                    minLength={3}
+                    maxLength={20}
+                    pattern="[a-zA-Z0-9_-]+"
+                    className="w-full px-4 py-3 rounded-lg border-2 border-minecraft-green focus:outline-none focus:ring-2 focus:ring-minecraft-green"
+                    placeholder="Choose a username"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Letters, numbers, underscores, and hyphens only. 3-20 characters. Can change every 14 days.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block font-semibold mb-2">Password</label>
