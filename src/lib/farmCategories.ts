@@ -100,6 +100,7 @@ export const FARM_CATEGORIES = [
   'Drowned Farm',
   'Slime Farm',
   'Cobble Farm',
+  'Creeper Farm',
   'Iron Farm',
   'Nether Tree',
   'Sugar Cane Farm',

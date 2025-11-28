@@ -10,6 +10,7 @@ import { FARM_CATEGORIES, getCategorySlug } from '../lib/farmCategories';
 export default function Home() {
   const [featuredFarms, setFeaturedFarms] = useState<any[]>([]);
   const [trendingFarms, setTrendingFarms] = useState<any[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +22,15 @@ export default function Home() {
       // Use mock data in demo mode
       setFeaturedFarms(mockFarms.slice(0, 6));
       setTrendingFarms(mockFarms.slice(0, 6));
+      
+      // Calculate category counts from mock data
+      const counts: Record<string, number> = {};
+      mockFarms.forEach((farm) => {
+        if (farm.category) {
+          counts[farm.category] = (counts[farm.category] || 0) + 1;
+        }
+      });
+      setCategoryCounts(counts);
       setLoading(false);
       return;
     }
@@ -41,6 +51,21 @@ export default function Home() {
         .eq('public', true)
         .order('created_at', { ascending: false })
         .limit(6);
+
+      // Fetch category counts
+      const { data: farms } = await supabase
+        .from('farms')
+        .select('category')
+        .eq('public', true)
+        .not('category', 'is', null);
+
+      const counts: Record<string, number> = {};
+      farms?.forEach((farm) => {
+        if (farm.category) {
+          counts[farm.category] = (counts[farm.category] || 0) + 1;
+        }
+      });
+      setCategoryCounts(counts);
 
       setFeaturedFarms(featured || []);
       setTrendingFarms(trending || []);
