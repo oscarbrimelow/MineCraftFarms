@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, AlertCircle, Download, Edit2, Save, X, Plus } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Download, Edit2, Save, X } from 'lucide-react';
 import Papa from 'papaparse';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -9,7 +9,6 @@ import { FARM_CATEGORIES } from '../lib/farmCategories';
 import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 import { parseMaterialsFromText } from '../lib/materialParser';
 import CategoryAutocomplete from '../components/CategoryAutocomplete';
-import MaterialAutocomplete from '../components/MaterialAutocomplete';
 
 interface UploadProps {
   user: SupabaseUser | null;
@@ -303,15 +302,6 @@ export default function BulkImport({ user }: UploadProps) {
     setEditingFarm({ ...editingFarm, [field]: value });
   };
 
-  const handleAddMaterial = (material: { name: string; count: number }, optional = false) => {
-    if (!editingFarm) return;
-    const key = optional ? 'optional_materials' : 'materials';
-    const current = Array.isArray(editingFarm[key]) ? editingFarm[key] as Array<{ name: string; count: number }> : [];
-    setEditingFarm({
-      ...editingFarm,
-      [key]: [...current, material],
-    });
-  };
 
   const handleRemoveMaterial = (index: number, optional = false) => {
     if (!editingFarm) return;
