@@ -560,6 +560,67 @@ export default function FarmDetail({ user }: FarmDetailProps) {
               )}
             </div>
 
+            {/* Farm Outputs */}
+            {(farm.farmable_items?.length > 0 || farm.drop_rate_per_hour?.length > 0) && (
+              <div className="bg-white rounded-xl shadow-minecraft p-6">
+                <h2 className="text-2xl font-bold mb-4">Farm Outputs</h2>
+                <div className="space-y-6">
+                  {/* Farmable Items */}
+                  {farm.farmable_items && farm.farmable_items.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-semibold mb-3">Items This Farm Produces</h3>
+                      <div className="flex flex-wrap gap-3">
+                        {farm.farmable_items.map((item: string) => (
+                          <div
+                            key={item}
+                            className="flex items-center space-x-2 px-4 py-2 bg-blue-100 rounded-lg border-2 border-blue-200"
+                          >
+                            <img
+                              src={getMinecraftItemIcon(item)}
+                              alt={item}
+                              className="w-6 h-6 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                            <span className="font-semibold text-blue-900">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Drop Rates */}
+                  {farm.drop_rate_per_hour && farm.drop_rate_per_hour.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-semibold mb-3">Drop Rate Per Hour</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {farm.drop_rate_per_hour.map((dropRate: any, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border-2 border-green-200"
+                          >
+                            <img
+                              src={getMinecraftItemIcon(dropRate.item)}
+                              alt={dropRate.item}
+                              className="w-10 h-10 object-contain flex-shrink-0"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                            <div className="flex-1">
+                              <div className="font-semibold text-gray-900">{dropRate.item}</div>
+                              <div className="text-sm text-gray-600">{dropRate.rate}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Additional Info */}
             {(farm.estimated_time || farm.notes || farm.chunk_requirements || farm.height_requirements) && (
               <div className="bg-white rounded-xl shadow-minecraft p-6">

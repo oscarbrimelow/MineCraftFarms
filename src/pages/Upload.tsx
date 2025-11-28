@@ -51,6 +51,8 @@ export default function Upload({ user }: UploadProps) {
     height_requirements: '',
     notes: '',
     farm_designer: '',
+    drop_rate_per_hour: [] as Array<{ item: string; rate: string }>,
+    farmable_items: [] as string[],
     public: true,
   });
 
@@ -58,6 +60,8 @@ export default function Upload({ user }: UploadProps) {
   const [newOptionalMaterial, setNewOptionalMaterial] = useState({ name: '', count: '' });
   const [newTag, setNewTag] = useState('');
   const [newVersion, setNewVersion] = useState('');
+  const [newDropRate, setNewDropRate] = useState({ item: '', rate: '' });
+  const [newFarmableItem, setNewFarmableItem] = useState('');
   const [preview, setPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
@@ -141,6 +145,8 @@ export default function Upload({ user }: UploadProps) {
         height_requirements: data.height_requirements || '',
         notes: data.notes || '',
         farm_designer: data.farm_designer || '',
+        drop_rate_per_hour: data.drop_rate_per_hour || [],
+        farmable_items: data.farmable_items || [],
         public: data.public,
       });
       setImages(data.images || []);
@@ -349,6 +355,64 @@ export default function Upload({ user }: UploadProps) {
     }));
   };
 
+  const handleAddDropRate = () => {
+    if (!newDropRate.item.trim() || !newDropRate.rate.trim()) return;
+    
+    // Validate that the item is a valid Minecraft item
+    if (!MINECRAFT_ITEMS.includes(newDropRate.item)) {
+      alert('Please select a valid Minecraft item from the dropdown.');
+      return;
+    }
+
+    // Check if item already exists
+    const exists = formData.drop_rate_per_hour.some((dr) => dr.item === newDropRate.item);
+    if (exists) {
+      alert('This item already has a drop rate. Please update the existing one or remove it first.');
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      drop_rate_per_hour: [...prev.drop_rate_per_hour, { item: newDropRate.item, rate: newDropRate.rate }],
+    }));
+    setNewDropRate({ item: '', rate: '' });
+  };
+
+  const handleRemoveDropRate = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      drop_rate_per_hour: prev.drop_rate_per_hour.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleAddFarmableItem = () => {
+    if (!newFarmableItem.trim()) return;
+    
+    // Validate that the item is a valid Minecraft item
+    if (!MINECRAFT_ITEMS.includes(newFarmableItem)) {
+      alert('Please select a valid Minecraft item from the dropdown.');
+      return;
+    }
+
+    if (formData.farmable_items.includes(newFarmableItem)) {
+      alert('This item is already in the farmable items list.');
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      farmable_items: [...prev.farmable_items, newFarmableItem],
+    }));
+    setNewFarmableItem('');
+  };
+
+  const handleRemoveFarmableItem = (item: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      farmable_items: prev.farmable_items.filter((i) => i !== item),
+    }));
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || !user) return;
@@ -474,6 +538,8 @@ export default function Upload({ user }: UploadProps) {
         height_requirements: formData.height_requirements || null,
         notes: formData.notes || null,
         farm_designer: formData.farm_designer || null,
+        drop_rate_per_hour: formData.drop_rate_per_hour.length > 0 ? formData.drop_rate_per_hour : null,
+        farmable_items: formData.farmable_items.length > 0 ? formData.farmable_items : [],
         public: formData.public,
         slug,
         ...(editId ? {} : { author_id: user?.id, upvotes_count: 0 }),
@@ -947,6 +1013,114 @@ export default function Upload({ user }: UploadProps) {
                     </button>
                   </span>
                 ))}
+              </div>
+            </div>
+
+            {/* Farm Outputs */}
+            <div className="bg-white rounded-xl shadow-minecraft p-6">
+              <h2 className="text-2xl font-bold mb-4">Farm Outputs</h2>
+              <div className="space-y-6">
+                {/* Farmable Items */}
+                <div>
+                  <label className="block font-semibold mb-2">Items This Farm Produces</label>
+                  <div className="flex gap-2 mb-2">
+                    <MaterialAutocomplete
+                      value={newFarmableItem}
+                      onChange={(value) => setNewFarmableItem(value)}
+                      placeholder="Search Minecraft items..."
+                      onEnter={() => handleAddFarmableItem()}
+                    />
+                    <button
+                      onClick={handleAddFarmableItem}
+                      className="px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.farmable_items.map((item) => (
+                      <span
+                        key={item}
+                        className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full"
+                      >
+                        <img
+                          src={getMinecraftItemIcon(item)}
+                          alt={item}
+                          className="w-5 h-5 object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                        <span>{item}</span>
+                        <button
+                          onClick={() => handleRemoveFarmableItem(item)}
+                          className="hover:text-red-600"
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Drop Rates */}
+                <div>
+                  <label className="block font-semibold mb-2">Drop Rate Per Hour</label>
+                  <p className="text-sm text-gray-600 mb-3">Specify how many items this farm produces per hour</p>
+                  <div className="flex gap-2 mb-2">
+                    <MaterialAutocomplete
+                      value={newDropRate.item}
+                      onChange={(value) => setNewDropRate({ ...newDropRate, item: value })}
+                      placeholder="Item name..."
+                      onEnter={() => {
+                        if (newDropRate.rate.trim()) handleAddDropRate();
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={newDropRate.rate}
+                      onChange={(e) => setNewDropRate({ ...newDropRate, rate: e.target.value })}
+                      placeholder="Rate (e.g., 1000/hour)"
+                      className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddDropRate()}
+                    />
+                    <button
+                      onClick={handleAddDropRate}
+                      className="px-4 py-2 bg-minecraft-gold text-white rounded-lg hover:bg-minecraft-gold-dark"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.drop_rate_per_hour.map((dropRate, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-green-50 rounded-lg border-2 border-green-200"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={getMinecraftItemIcon(dropRate.item)}
+                            alt={dropRate.item}
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                          <div>
+                            <div className="font-semibold">{dropRate.item}</div>
+                            <div className="text-sm text-gray-600">{dropRate.rate}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveDropRate(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 

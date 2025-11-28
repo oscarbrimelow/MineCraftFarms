@@ -38,7 +38,9 @@ CREATE TABLE IF NOT EXISTS farms (
   chunk_requirements TEXT,
   height_requirements TEXT,
   notes TEXT,
-  farm_designer TEXT
+  farm_designer TEXT,
+  drop_rate_per_hour JSONB DEFAULT '[]'::jsonb,
+  farmable_items TEXT[] DEFAULT ARRAY[]::TEXT[]
 );
 
 -- Comments table
