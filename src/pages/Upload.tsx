@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase';
 import { isDemoMode } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import YouTubeCaptionExtractor from '../components/YouTubeCaptionExtractor';
+import MaterialAutocomplete from '../components/MaterialAutocomplete';
+import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 
 interface UploadProps {
   user: SupabaseUser | null;
@@ -282,6 +284,12 @@ export default function Upload({ user }: UploadProps) {
 
   const handleAddMaterial = (optional = false) => {
     if (!newMaterial.name.trim()) return;
+    
+    // Validate that the material is a valid Minecraft item
+    if (!MINECRAFT_ITEMS.includes(newMaterial.name)) {
+      alert('Please select a valid Minecraft item from the dropdown.');
+      return;
+    }
 
     const materials = optional ? formData.optional_materials : formData.materials;
     const existingIndex = materials.findIndex((m) => m.name === newMaterial.name);
@@ -733,14 +741,11 @@ export default function Upload({ user }: UploadProps) {
                 <div>
                   <label className="block font-semibold mb-2">Required Materials</label>
                   <div className="flex gap-2 mb-2">
-                    <input
-                      type="text"
+                    <MaterialAutocomplete
                       value={newMaterial.name}
-                      onChange={(e) => setNewMaterial({ ...newMaterial, name: e.target.value })}
-                      placeholder="Material name"
-                      list="materials-list"
-                      className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddMaterial()}
+                      onChange={(value) => setNewMaterial({ ...newMaterial, name: value })}
+                      placeholder="Search Minecraft items..."
+                      onEnter={() => handleAddMaterial()}
                     />
                     <input
                       type="number"
@@ -756,11 +761,6 @@ export default function Upload({ user }: UploadProps) {
                       Add
                     </button>
                   </div>
-                  <datalist id="materials-list">
-                    {COMMON_MATERIALS.map((material) => (
-                      <option key={material} value={material} />
-                    ))}
-                  </datalist>
                   <div className="space-y-2">
                     {formData.materials.map((material, index) => (
                       <div
@@ -783,13 +783,11 @@ export default function Upload({ user }: UploadProps) {
                 <div>
                   <label className="block font-semibold mb-2">Optional Materials</label>
                   <div className="flex gap-2 mb-2">
-                    <input
-                      type="text"
+                    <MaterialAutocomplete
                       value={newMaterial.name}
-                      onChange={(e) => setNewMaterial({ ...newMaterial, name: e.target.value })}
-                      placeholder="Optional material"
-                      className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddMaterial(true)}
+                      onChange={(value) => setNewMaterial({ ...newMaterial, name: value })}
+                      placeholder="Search Minecraft items..."
+                      onEnter={() => handleAddMaterial(true)}
                     />
                     <button
                       onClick={() => handleAddMaterial(true)}
