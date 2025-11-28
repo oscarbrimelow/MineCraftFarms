@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Clock, ThumbsUp, Tag, Video } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { getMinecraftMobAvatar } from '../lib/avatarUtils';
+import { getMinecraftMobAvatar, getYouTubeThumbnail } from '../lib/avatarUtils';
 
 interface FarmCardProps {
   farm: {
@@ -37,6 +37,9 @@ export default function FarmCard({ farm, index = 0 }: FarmCardProps) {
     mobile: 'bg-purple-500',
   };
 
+  // Get image source: preview_image, YouTube thumbnail, or null
+  const imageSrc = farm.preview_image || getYouTubeThumbnail(farm.video_url);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -47,14 +50,25 @@ export default function FarmCard({ farm, index = 0 }: FarmCardProps) {
     >
       <Link to={`/farms/${farm.platform[0] || 'java'}/${farm.slug}`}>
         <div className="relative h-48 bg-gradient-to-br from-minecraft-green-light to-minecraft-indigo-light overflow-hidden">
-          {farm.preview_image ? (
+          {imageSrc ? (
             <img
-              src={farm.preview_image}
+              src={imageSrc}
               alt={farm.title}
               className="w-full h-full object-cover"
               loading="lazy"
+              onError={(e) => {
+                // If YouTube thumbnail fails, try hqdefault as fallback
+                const videoId = farm.video_url?.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+                if (videoId && imageSrc?.includes('maxresdefault')) {
+                  (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                } else {
+                  // Hide image and show emoji fallback
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }
+              }}
             />
-          ) : (
+          ) : null}
+          {!imageSrc && (
             <div className="w-full h-full flex items-center justify-center text-6xl">
               🧱
             </div>

@@ -74,3 +74,27 @@ export function getMinecraftMobAvatar(userId: string | null | undefined): string
   return MINECRAFT_MOBS[index];
 }
 
+/**
+ * Extract YouTube video ID from a YouTube URL
+ */
+export function getYouTubeVideoId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  
+  // Match various YouTube URL formats
+  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const match = url.match(youtubeRegex);
+  return match ? match[1] : null;
+}
+
+/**
+ * Get YouTube thumbnail URL from a YouTube video URL
+ * Returns maxresdefault (highest quality) with hqdefault as fallback
+ */
+export function getYouTubeThumbnail(videoUrl: string | null | undefined): string | null {
+  const videoId = getYouTubeVideoId(videoUrl);
+  if (!videoId) return null;
+  
+  // Try maxresdefault first (best quality), fallback to hqdefault
+  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+}
+

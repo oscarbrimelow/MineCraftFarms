@@ -19,7 +19,7 @@ import { isDemoMode, mockFarms } from '../lib/demoData';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import CommentsSection from '../components/CommentsSection';
 import StepsEditor from '../components/StepsEditor';
-import { getMinecraftMobAvatar } from '../lib/avatarUtils';
+import { getMinecraftMobAvatar, getYouTubeThumbnail, getYouTubeVideoId } from '../lib/avatarUtils';
 
 interface FarmDetailProps {
   user: SupabaseUser | null;
@@ -309,6 +309,9 @@ export default function FarmDetail({ user }: FarmDetailProps) {
 
   const materials = farm.materials || [];
   const optionalMaterials = farm.optional_materials || [];
+  
+  // Get image source: preview_image, YouTube thumbnail, or null
+  const imageSrc = farm.preview_image || getYouTubeThumbnail(farm.video_url);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-minecraft-sky-light/50 to-white py-8">
@@ -336,12 +339,20 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                     allowFullScreen
                   />
                 </div>
-              ) : farm.preview_image ? (
+              ) : imageSrc ? (
                 <img
-                  src={farm.preview_image}
+                  src={imageSrc}
                   alt={farm.title}
                   className="w-full h-auto"
                   loading="eager"
+                  onError={(e) => {
+                    // If YouTube thumbnail fails, try hqdefault as fallback
+                    const videoId = getYouTubeVideoId(farm.video_url);
+                    if (videoId && imageSrc?.includes('maxresdefault')) {
+                      (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                    }
+                    // If that also fails, the browser will show broken image, which is acceptable
+                  }}
                 />
               ) : (
                 <div className="aspect-video bg-gradient-to-br from-minecraft-green to-minecraft-indigo flex items-center justify-center text-8xl">
