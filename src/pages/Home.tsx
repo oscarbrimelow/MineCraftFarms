@@ -97,17 +97,6 @@ export default function Home() {
     },
   ];
 
-  const tags = [
-    'auto-sugarcane',
-    'iron-farm',
-    'gold-farm',
-    'xp-farm',
-    'crop-farm',
-    'mob-farm',
-    'redstone',
-    'easy',
-    'efficient',
-  ];
 
   return (
     <div className="min-h-screen">
@@ -423,26 +412,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending Tags */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-display text-center mb-8 text-gray-900 flex items-center justify-center space-x-2">
-            <Zap className="text-minecraft-gold" />
-            <span>Popular Tags</span>
-          </h2>
-          <div className="flex flex-wrap justify-center gap-3">
-            {tags.map((tag) => (
-              <Link
-                key={tag}
-                to={`/tag/${tag}`}
-                className="px-6 py-3 bg-gradient-to-r from-minecraft-green to-minecraft-indigo text-white rounded-full font-semibold shadow-minecraft-sm hover:shadow-minecraft transition-all hover:scale-105"
-              >
-                #{tag}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Latest Farms */}
       {trendingFarms.length > 0 && (
