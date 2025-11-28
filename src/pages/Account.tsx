@@ -477,11 +477,6 @@ export default function Account({ user: initialUser }: AccountProps) {
                     {profileData.username || user.email?.split('@')[0] || 'User'}
                   </h1>
                   <p className="text-gray-600 mb-4">{profileData.bio || 'No bio yet'}</p>
-                  {daysUntilCanChangeUsername !== null && daysUntilCanChangeUsername > 0 && (
-                    <p className="text-sm text-orange-600 mb-3 font-medium">
-                      ⚠️ Username can only be changed every 14 days. {daysUntilCanChangeUsername} day{daysUntilCanChangeUsername !== 1 ? 's' : ''} remaining.
-                    </p>
-                  )}
                   <button
                     onClick={() => setEditingProfile(true)}
                     className="flex items-center space-x-2 px-4 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark"
