@@ -12,7 +12,7 @@ export default function DonationBox({
   donationUrl = 'https://ko-fi.com' // Default, user should update this
 }: DonationBoxProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true); // Start collapsed
   const [dismissed, setDismissed] = useState(false);
 
   // Check if user has dismissed the donation box before
@@ -67,14 +67,15 @@ export default function DonationBox({
           initial={{ opacity: 0, y: position.includes('bottom') ? 20 : -20, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: position.includes('bottom') ? 20 : -20, scale: 0.9 }}
-          className={`fixed ${positionClasses[position]} z-50 max-w-sm w-full`}
+          className={`fixed ${positionClasses[position]} z-50 ${isMinimized ? 'max-w-xs' : 'max-w-sm'} w-full`}
         >
           <div className="bg-white rounded-xl shadow-2xl border-2 border-pink-300 overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-pink-500 to-pink-600 p-4 flex items-center justify-between">
+            <div className={`bg-gradient-to-r from-pink-500 to-pink-600 ${isMinimized ? 'p-2' : 'p-4'} flex items-center justify-between`}>
               <div className="flex items-center space-x-2">
-                <Heart className="text-white" size={20} />
-                <h3 className="text-white font-bold text-sm">Support the Project</h3>
+                <Heart className="text-white" size={isMinimized ? 16 : 20} />
+                {!isMinimized && <h3 className="text-white font-bold text-sm">Support the Project</h3>}
+                {isMinimized && <h3 className="text-white font-bold text-xs">Support</h3>}
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -89,7 +90,7 @@ export default function DonationBox({
                   className="text-white hover:text-gray-200 transition-colors"
                   title="Dismiss"
                 >
-                  <X size={18} />
+                  <X size={isMinimized ? 16 : 18} />
                 </button>
               </div>
             </div>
