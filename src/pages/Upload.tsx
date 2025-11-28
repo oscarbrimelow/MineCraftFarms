@@ -1105,6 +1105,52 @@ export default function Upload({ user }: UploadProps) {
               <div className="space-y-4">
                 <div>
                   <label className="block font-semibold mb-2">Required Materials</label>
+                  
+                  {/* Paste Materials Section */}
+                  <div className="mb-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Paste Material List (Optional)
+                    </label>
+                    <p className="text-xs text-gray-600 mb-2">
+                      Paste a list like "93 Cobbled Deepslate" (one per line). Items will be automatically matched and added.
+                    </p>
+                    <textarea
+                      value={pasteMaterialsText}
+                      onChange={(e) => setPasteMaterialsText(e.target.value)}
+                      placeholder="93 Cobbled Deepslate&#10;59 Scaffolding&#10;2 Obsidian&#10;..."
+                      rows={4}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green mb-2 font-mono text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handlePasteMaterials}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+                    >
+                      Parse and Add Materials
+                    </button>
+                    {pasteResult && (
+                      <div className="mt-3 p-3 bg-white rounded-lg border-2 border-gray-200">
+                        {pasteResult.added > 0 && (
+                          <div className="text-green-600 text-sm font-semibold mb-2">
+                            ✓ Successfully added {pasteResult.added} material{pasteResult.added !== 1 ? 's' : ''}
+                          </div>
+                        )}
+                        {pasteResult.failed.length > 0 && (
+                          <div>
+                            <div className="text-red-600 text-sm font-semibold mb-1">
+                              ⚠ Could not match {pasteResult.failed.length} item{pasteResult.failed.length !== 1 ? 's' : ''} (please add manually):
+                            </div>
+                            <ul className="text-xs text-gray-700 list-disc list-inside space-y-1">
+                              {pasteResult.failed.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-2 mb-2">
                     <MaterialAutocomplete
                       value={newRequiredMaterial.name}
