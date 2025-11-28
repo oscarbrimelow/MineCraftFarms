@@ -798,6 +798,15 @@ export default function FarmDetail({ user }: FarmDetailProps) {
           </div>
         </div>
       </div>
+
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        user={user}
+        itemType="farm"
+        itemId={farm?.id || ''}
+        itemTitle={farm?.title}
+      />
     </div>
   );
 }
