@@ -344,31 +344,28 @@ export default function Home() {
           </motion.div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {FARM_CATEGORIES.map((category, index) => (
-              <motion.div
+            {FARM_CATEGORIES.map((category) => {
+              const count = categoryCounts[category] || 0;
+              return { category, count };
+            })
+            .sort((a, b) => b.count - a.count)
+            .map(({ category, count }) => (
+              <Link
                 key={category}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: index * 0.02 }}
+                to={`/category/${getCategorySlug(category)}`}
+                className="block group"
               >
-                <Link
-                  to={`/category/${getCategorySlug(category)}`}
-                  className="block group"
-                >
-                  <motion.div
-                    className="bg-gradient-to-br from-minecraft-green/10 to-minecraft-indigo/10 rounded-xl p-4 border-2 border-minecraft-green/20 hover:border-minecraft-green transition-all duration-300 h-full"
-                    whileHover={{ scale: 1.05, y: -4 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="text-center">
-                      <h3 className="font-display font-semibold text-gray-900 text-sm md:text-base group-hover:text-minecraft-green transition-colors line-clamp-2">
-                        {category}
-                      </h3>
-                    </div>
-                  </motion.div>
-                </Link>
-              </motion.div>
+                <div className="bg-gradient-to-br from-minecraft-green/10 to-minecraft-indigo/10 rounded-xl p-4 border-2 border-minecraft-green/20 hover:border-minecraft-green transition-all duration-300 h-24 flex flex-col items-center justify-center">
+                  <h3 className="font-display font-semibold text-gray-900 text-sm md:text-base group-hover:text-minecraft-green transition-colors line-clamp-2 text-center">
+                    {category}
+                  </h3>
+                  {count > 0 && (
+                    <span className="text-xs text-gray-500 mt-1">
+                      {count} {count === 1 ? 'farm' : 'farms'}
+                    </span>
+                  )}
+                </div>
+              </Link>
             ))}
           </div>
         </div>
