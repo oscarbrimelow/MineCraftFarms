@@ -11,7 +11,7 @@ interface UploadProps {
   user: SupabaseUser | null;
 }
 
-const PLATFORMS = ['Java', 'Bedrock', 'Xbox', 'PlayStation', 'Switch', 'Mobile'];
+const PLATFORMS = ['Java', 'Bedrock'];
 const COMMON_VERSIONS = [
   '1.21', '1.20.6', '1.20.5', '1.20.4', '1.20.3', '1.20.2', '1.20.1', '1.20',
   '1.19.4', '1.19.3', '1.19.2', '1.19.1', '1.19',

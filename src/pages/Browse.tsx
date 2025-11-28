@@ -7,7 +7,7 @@ import { isDemoMode, mockFarms } from '../lib/demoData';
 import FarmCard from '../components/FarmCard';
 import Fuse from 'fuse.js';
 
-const PLATFORMS = ['Java', 'Bedrock', 'Xbox', 'PlayStation', 'Switch', 'Mobile'];
+const PLATFORMS = ['Java', 'Bedrock'];
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest First' },
   { value: 'oldest', label: 'Oldest First' },

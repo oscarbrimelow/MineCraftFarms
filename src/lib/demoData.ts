@@ -124,7 +124,7 @@ export const mockFarms = [
     slug: 'simple-crop-farm-auto-harvest',
     title: 'Simple Crop Farm - Auto Harvest',
     description: 'Basic automatic crop farm for wheat, carrots, potatoes, and beets. Uses villagers or pistons to harvest.',
-    platform: ['Java', 'Bedrock', 'Xbox'],
+    platform: ['Java', 'Bedrock'],
     versions: ['Java 1.21.1', 'Bedrock 1.21.0'],
     tags: ['crop-farm', 'auto-harvest', 'easy', 'villager'],
     materials: [
@@ -155,7 +155,7 @@ export const mockFarms = [
     slug: 'mob-grinder-sky-platform-design',
     title: 'Mob Grinder - Sky Platform Design',
     description: 'Classic mob grinder built high in the sky. Collects drops from natural mob spawning. Works in any version.',
-    platform: ['Java', 'Bedrock', 'Xbox', 'PlayStation'],
+    platform: ['Java', 'Bedrock'],
     versions: ['Java 1.21.1', 'Bedrock 1.21.0', 'All versions'],
     tags: ['mob-farm', 'easy', 'drops'],
     materials: [

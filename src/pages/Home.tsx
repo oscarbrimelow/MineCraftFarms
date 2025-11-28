@@ -53,10 +53,6 @@ export default function Home() {
   const platforms = [
     { name: 'Java', color: 'bg-blue-500', icon: '☕' },
     { name: 'Bedrock', color: 'bg-green-500', icon: '🧱' },
-    { name: 'Xbox', color: 'bg-green-600', icon: '🎮' },
-    { name: 'PlayStation', color: 'bg-blue-600', icon: '🎮' },
-    { name: 'Switch', color: 'bg-red-500', icon: '🎮' },
-    { name: 'Mobile', color: 'bg-purple-500', icon: '📱' },
   ];
 
   const tags = [

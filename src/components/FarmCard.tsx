@@ -31,10 +31,6 @@ export default function FarmCard({ farm, index = 0 }: FarmCardProps) {
   const platformColors: Record<string, string> = {
     java: 'bg-blue-500',
     bedrock: 'bg-green-500',
-    xbox: 'bg-green-600',
-    playstation: 'bg-blue-600',
-    switch: 'bg-red-500',
-    mobile: 'bg-purple-500',
   };
 
   // Get image source: preview_image, YouTube thumbnail, or null
