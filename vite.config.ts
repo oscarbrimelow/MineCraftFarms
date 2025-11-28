@@ -14,5 +14,6 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
-  base: process.env.GITHUB_PAGES === 'true' || process.env.NODE_ENV === 'production' ? '/MineCraftFarms/' : '/',
+  // For GitHub Pages, use the repository name as base path
+  base: '/MineCraftFarms/',
 });
