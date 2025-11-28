@@ -131,7 +131,7 @@ export default function Home() {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="block mb-2"
               >
-                Master the Art
+                The Best Minecraft
               </motion.span>
               <motion.span
                 initial={{ opacity: 0, scale: 0.5 }}
@@ -142,7 +142,7 @@ export default function Home() {
                   backgroundSize: '200% auto',
                 }}
               >
-                of Minecraft Farms
+                Farms, All in One Place
               </motion.span>
             </motion.h1>
             <motion.div
@@ -162,9 +162,9 @@ export default function Home() {
               textShadow: '0 2px 10px rgba(0,0,0,0.3)',
             }}
           >
-            Discover thousands of farm designs, share your creations, and become a farming legend.
+            Browse thousands of farm designs, share your own, and find exactly what you need.
             <br />
-            <span className="text-yellow-200">Everything you need to build the perfect farm.</span>
+            <span className="text-yellow-200">From simple to complex, we've got you covered.</span>
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
