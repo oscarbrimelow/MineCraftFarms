@@ -5,12 +5,11 @@ import {
   Flag, 
   Users, 
   Trash2, 
-  Ban, 
   Search,
   AlertTriangle,
   Shield,
   MessageSquare,
-  Farm
+  Grid3x3
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -378,7 +377,7 @@ export default function Admin({ user }: AdminProps) {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <Farm size={18} />
+              <Grid3x3 size={18} />
               <span>Farms ({farms.length})</span>
             </button>
             <button
