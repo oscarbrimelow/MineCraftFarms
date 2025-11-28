@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Upload, FileText, CheckCircle, XCircle, AlertCircle, Download } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { FARM_CATEGORIES } from '../lib/farmCategories';
@@ -46,8 +46,6 @@ interface ImportResult {
 
 export default function BulkImport({ user }: UploadProps) {
   const navigate = useNavigate();
-  const [file, setFile] = useState<File | null>(null);
-  const [fileType, setFileType] = useState<'csv' | 'json' | null>(null);
   const [farms, setFarms] = useState<FarmImportData[]>([]);
   const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -120,7 +118,7 @@ export default function BulkImport({ user }: UploadProps) {
     }
   };
 
-  const validateFarm = (farm: FarmImportData, index: number): ValidationResult => {
+  const validateFarm = (farm: FarmImportData): ValidationResult => {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -198,8 +196,6 @@ export default function BulkImport({ user }: UploadProps) {
     const uploadedFile = e.target.files?.[0];
     if (!uploadedFile) return;
 
-    setFile(uploadedFile);
-    setFileType(uploadedFile.name.endsWith('.csv') ? 'csv' : 'json');
     setImportResult(null);
 
     try {
@@ -211,7 +207,7 @@ export default function BulkImport({ user }: UploadProps) {
       setFarms(parsedFarms);
 
       // Validate all farms
-      const validations = parsedFarms.map((farm, index) => validateFarm(farm, index));
+      const validations = parsedFarms.map((farm) => validateFarm(farm));
       setValidationResults(validations);
       setPreviewMode(true);
     } catch (error: any) {
@@ -445,7 +441,6 @@ export default function BulkImport({ user }: UploadProps) {
                     setPreviewMode(false);
                     setFarms([]);
                     setValidationResults([]);
-                    setFile(null);
                   }}
                   className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"
                 >
@@ -585,7 +580,6 @@ export default function BulkImport({ user }: UploadProps) {
                 setPreviewMode(false);
                 setFarms([]);
                 setValidationResults([]);
-                setFile(null);
               }}
               className="mt-6 px-6 py-3 bg-minecraft-green text-white rounded-lg font-semibold hover:bg-minecraft-green-dark"
             >
