@@ -30,6 +30,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
   const [loading, setLoading] = useState(true);
   const [upvoted, setUpvoted] = useState(false);
   const [checkedMaterials, setCheckedMaterials] = useState<Set<number>>(new Set());
+  const [shareCopied, setShareCopied] = useState(false);
   const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
   const [loadingCreator, setLoadingCreator] = useState(false);
   const navigate = useNavigate();
@@ -156,8 +157,8 @@ export default function FarmDetail({ user }: FarmDetailProps) {
       }
     } else {
       await navigator.clipboard.writeText(url);
-      setCopied('share');
-      setTimeout(() => setCopied(null), 2000);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
     }
   };
 
@@ -428,7 +429,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                   className="flex items-center space-x-2 px-6 py-3 bg-minecraft-indigo text-white rounded-xl font-semibold hover:bg-minecraft-indigo-dark transition-colors"
                 >
                   <Share2 size={20} />
-                  <span>{copied === 'share' ? 'Copied!' : 'Share'}</span>
+                  <span>{shareCopied ? 'Copied!' : 'Share'}</span>
                 </button>
                 <button
                   onClick={handleReport}
