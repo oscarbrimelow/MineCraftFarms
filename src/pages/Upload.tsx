@@ -10,6 +10,7 @@ import MaterialAutocomplete from '../components/MaterialAutocomplete';
 import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
 import { getYouTubeVideoId } from '../lib/avatarUtils';
+import { FARM_CATEGORIES } from '../lib/farmCategories';
 
 interface UploadProps {
   user: SupabaseUser | null;
@@ -54,6 +55,7 @@ export default function Upload({ user }: UploadProps) {
     drop_rate_per_hour: [] as Array<{ item: string; rate: string }>,
     farmable_items: [] as string[],
     required_biome: '',
+    category: '',
     public: true,
   });
 
@@ -149,6 +151,7 @@ export default function Upload({ user }: UploadProps) {
         drop_rate_per_hour: data.drop_rate_per_hour || [],
         farmable_items: data.farmable_items || [],
         required_biome: data.required_biome || '',
+        category: data.category || '',
         public: data.public,
       });
       setImages(data.images || []);
@@ -543,6 +546,7 @@ export default function Upload({ user }: UploadProps) {
         drop_rate_per_hour: formData.drop_rate_per_hour.length > 0 ? formData.drop_rate_per_hour : null,
         farmable_items: formData.farmable_items.length > 0 ? formData.farmable_items : [],
         required_biome: formData.required_biome || null,
+        category: formData.category || null,
         public: formData.public,
         slug,
         ...(editId ? {} : { author_id: user?.id, upvotes_count: 0 }),
@@ -643,6 +647,30 @@ export default function Upload({ user }: UploadProps) {
                     className="w-full px-4 py-3 rounded-lg border-2 border-minecraft-green focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Category */}
+            <div className="bg-white rounded-xl shadow-minecraft p-6">
+              <h2 className="text-2xl font-bold mb-4">Farm Category</h2>
+              <div>
+                <label className="block font-semibold mb-2">Category *</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
+                  required
+                >
+                  <option value="">Select a farm category...</option>
+                  {FARM_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-sm text-gray-600 mt-2">
+                  Choose the category that best describes this farm design.
+                </p>
               </div>
             </div>
 

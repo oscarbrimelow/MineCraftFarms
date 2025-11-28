@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, TrendingUp, Sparkles, Zap } from 'lucide-react';
+import { ArrowRight, TrendingUp, Sparkles, Zap, Grid } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, mockFarms } from '../lib/demoData';
 import FarmCard from '../components/FarmCard';
+import { FARM_CATEGORIES, getCategorySlug } from '../lib/farmCategories';
 
 export default function Home() {
   const [featuredFarms, setFeaturedFarms] = useState<any[]>([]);
@@ -291,6 +292,56 @@ export default function Home() {
                     {/* Animated border */}
                     <div className="absolute inset-0 rounded-2xl border-2 border-white/20 group-hover:border-white/40 transition-colors"></div>
                   </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Browse by Category */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl md:text-5xl font-display text-gray-900 flex items-center justify-center space-x-3 mb-4">
+              <Grid className="text-minecraft-green" size={40} />
+              <span>Browse by Category</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Explore farm designs organized by type. Click on any category to see all available designs.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {FARM_CATEGORIES.map((category, index) => (
+              <motion.div
+                key={category}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.3, delay: index * 0.02 }}
+              >
+                <Link
+                  to={`/category/${getCategorySlug(category)}`}
+                  className="block group"
+                >
+                  <motion.div
+                    className="bg-gradient-to-br from-minecraft-green/10 to-minecraft-indigo/10 rounded-xl p-4 border-2 border-minecraft-green/20 hover:border-minecraft-green transition-all duration-300 h-full"
+                    whileHover={{ scale: 1.05, y: -4 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="text-center">
+                      <h3 className="font-display font-semibold text-gray-900 text-sm md:text-base group-hover:text-minecraft-green transition-colors line-clamp-2">
+                        {category}
+                      </h3>
+                    </div>
+                  </motion.div>
                 </Link>
               </motion.div>
             ))}
