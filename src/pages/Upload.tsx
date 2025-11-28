@@ -169,18 +169,6 @@ export default function Upload({ user }: UploadProps) {
 
     setLoadingCreator(true);
     try {
-      // Extract video ID
-      let videoId = '';
-      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-      const match = videoUrl.match(youtubeRegex);
-      if (match) {
-        videoId = match[1];
-      } else {
-        setYoutubeCreator(null);
-        setLoadingCreator(false);
-        return;
-      }
-
       // Use YouTube oEmbed API to get video info (no API key needed)
       const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
       const response = await fetch(oembedUrl);
