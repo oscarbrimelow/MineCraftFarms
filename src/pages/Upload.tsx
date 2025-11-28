@@ -10,7 +10,6 @@ import CategoryAutocomplete from '../components/CategoryAutocomplete';
 import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
 import { getYouTubeVideoId } from '../lib/avatarUtils';
-import { FARM_CATEGORIES } from '../lib/farmCategories';
 
 interface UploadProps {
   user: SupabaseUser | null;
@@ -71,7 +70,6 @@ export default function Upload({ user }: UploadProps) {
   const [preview, setPreview] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
-  const [schematicFile, setSchematicFile] = useState<File | null>(null);
   const [uploadingSchematic, setUploadingSchematic] = useState(false);
   const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
   const [loadingCreator, setLoadingCreator] = useState(false);
