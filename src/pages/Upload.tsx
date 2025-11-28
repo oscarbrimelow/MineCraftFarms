@@ -204,12 +204,23 @@ export default function Upload({ user }: UploadProps) {
         }
       }
 
-      // Get channel thumbnail (YouTube provides default thumbnail URLs)
-      // For profile picture, we'll use a placeholder or try to fetch from channel data
-      // YouTube doesn't provide profile picture via oEmbed, so we'll use a fallback
-      const avatarUrl = channelId 
-        ? `https://yt3.ggpht.com/ytc/${channelId.slice(0, 1).toUpperCase()}=s176-c-k-c0x00ffffff-no-rj`
-        : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=3b82f6&color=fff&size=128`;
+      // Get channel thumbnail/avatar
+      // YouTube oEmbed doesn't provide profile pictures directly
+      // We'll try to construct a thumbnail URL or use a generated avatar
+      let avatarUrl = '';
+      
+      // Try to get channel thumbnail from YouTube's thumbnail service
+      // For custom URLs, we can't easily get the channel ID, so use generated avatar
+      if (channelId && channelId.length > 10) {
+        // It's a channel ID (format: UC...)
+        avatarUrl = `https://yt3.googleusercontent.com/ytc/${channelId}=s176-c-k-c0x00ffffff-no-rj`;
+      } else if (authorUrl) {
+        // Try to fetch channel page to get thumbnail (might not work due to CORS)
+        // For now, use generated avatar based on channel name
+        avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=FF0000&color=fff&bold=true&size=128`;
+      } else {
+        avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=FF0000&color=fff&bold=true&size=128`;
+      }
 
       setYoutubeCreator({
         name: authorName,
@@ -655,6 +666,40 @@ export default function Upload({ user }: UploadProps) {
                     className="w-full px-4 py-3 rounded-lg border-2 border-minecraft-green focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                   />
                 </div>
+                
+                {/* YouTube Creator Info */}
+                {loadingCreator && (
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-minecraft-green"></div>
+                    <span className="text-sm">Fetching video creator...</span>
+                  </div>
+                )}
+                
+                {youtubeCreator && !loadingCreator && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-lg border-2 border-red-200"
+                  >
+                    <p className="text-sm font-bold text-gray-800 mb-3">Designed by:</p>
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={youtubeCreator.avatar}
+                        alt={youtubeCreator.name}
+                        className="w-16 h-16 rounded-full border-4 border-white shadow-lg object-cover"
+                        onError={(e) => {
+                          // Fallback to avatar service if image fails
+                          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(youtubeCreator.name)}&background=FF0000&color=fff&bold=true&size=128`;
+                        }}
+                      />
+                      <div>
+                        <p className="font-bold text-lg text-gray-900">{youtubeCreator.name}</p>
+                        <p className="text-xs text-gray-600">YouTube Creator</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                
                 {formData.video_url && (
                   <div>
                     <button
