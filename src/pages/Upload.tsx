@@ -63,6 +63,8 @@ export default function Upload({ user }: UploadProps) {
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const [showCaptionExtractor, setShowCaptionExtractor] = useState(false);
+  const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
+  const [loadingCreator, setLoadingCreator] = useState(false);
 
   useEffect(() => {
     if (editId && user) {
@@ -157,6 +159,90 @@ export default function Upload({ user }: UploadProps) {
         : [...prev.platform, platform],
     }));
   };
+
+  // Extract YouTube channel info from video URL
+  const fetchYouTubeCreator = async (videoUrl: string) => {
+    if (!videoUrl || !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
+      setYoutubeCreator(null);
+      return;
+    }
+
+    setLoadingCreator(true);
+    try {
+      // Extract video ID
+      let videoId = '';
+      const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+      const match = videoUrl.match(youtubeRegex);
+      if (match) {
+        videoId = match[1];
+      } else {
+        setYoutubeCreator(null);
+        setLoadingCreator(false);
+        return;
+      }
+
+      // Use YouTube oEmbed API to get video info (no API key needed)
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
+      const response = await fetch(oembedUrl);
+      if (!response.ok) throw new Error('Failed to fetch video info');
+      
+      const data = await response.json();
+      // oEmbed provides author_name and author_url
+      const authorName = data.author_name || 'Unknown Creator';
+      const authorUrl = data.author_url || '';
+
+      // Extract channel ID from author URL or video URL
+      let channelId = '';
+      const channelMatch = authorUrl.match(/channel\/([^/?]+)/);
+      if (channelMatch) {
+        channelId = channelMatch[1];
+      } else {
+        // Try to get from custom URL
+        const customMatch = authorUrl.match(/c\/([^/?]+)/) || authorUrl.match(/user\/([^/?]+)/);
+        if (customMatch) {
+          channelId = customMatch[1];
+        }
+      }
+
+      // Get channel thumbnail (YouTube provides default thumbnail URLs)
+      // For profile picture, we'll use a placeholder or try to fetch from channel data
+      // YouTube doesn't provide profile picture via oEmbed, so we'll use a fallback
+      const avatarUrl = channelId 
+        ? `https://yt3.ggpht.com/ytc/${channelId.slice(0, 1).toUpperCase()}=s176-c-k-c0x00ffffff-no-rj`
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=3b82f6&color=fff&size=128`;
+
+      setYoutubeCreator({
+        name: authorName,
+        avatar: avatarUrl,
+        channelId: channelId || authorUrl,
+      });
+
+      // Auto-populate farm_designer if empty
+      if (!formData.farm_designer.trim()) {
+        setFormData((prev) => ({
+          ...prev,
+          farm_designer: authorName,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching YouTube creator:', error);
+      setYoutubeCreator(null);
+    } finally {
+      setLoadingCreator(false);
+    }
+  };
+
+  // Watch for video URL changes
+  useEffect(() => {
+    if (formData.video_url) {
+      const timeoutId = setTimeout(() => {
+        fetchYouTubeCreator(formData.video_url);
+      }, 500); // Debounce
+      return () => clearTimeout(timeoutId);
+    } else {
+      setYoutubeCreator(null);
+    }
+  }, [formData.video_url]);
 
   const handleAddVersion = () => {
     if (newVersion.trim() && !formData.versions.includes(newVersion.trim())) {
@@ -776,14 +862,34 @@ export default function Upload({ user }: UploadProps) {
                 </div>
                 <div>
                   <label className="block font-semibold mb-2">Farm Designer (Optional)</label>
+                  {youtubeCreator && (
+                    <div className="mb-2 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-center space-x-3">
+                      <img
+                        src={youtubeCreator.avatar}
+                        alt={youtubeCreator.name}
+                        className="w-10 h-10 rounded-full border-2 border-blue-300 object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(youtubeCreator.name)}&background=3b82f6&color=fff&size=128`;
+                        }}
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">Designed by: {youtubeCreator.name}</p>
+                        <p className="text-xs text-gray-600">Auto-detected from YouTube video</p>
+                      </div>
+                    </div>
+                  )}
                   <input
                     type="text"
                     value={formData.farm_designer}
                     onChange={(e) => setFormData({ ...formData, farm_designer: e.target.value })}
-                    placeholder="e.g., Original designer name or YouTube channel"
+                    placeholder={youtubeCreator ? `Currently: ${youtubeCreator.name}` : "e.g., Original designer name or YouTube channel"}
                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Credit the original designer if this farm is based on someone else's design</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {youtubeCreator 
+                      ? "Credit the original designer. Auto-filled from YouTube video - you can edit if needed."
+                      : "Credit the original designer if this farm is based on someone else's design"}
+                  </p>
                 </div>
                 <div>
                   <label className="block font-semibold mb-2">Notes</label>
