@@ -112,22 +112,59 @@ export default function Home() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-5xl md:text-7xl font-display text-white mb-6 text-shadow-lg"
+            transition={{ duration: 0.8 }}
+            className="mb-8"
           >
-            Build. Share. Discover.
-          </motion.h1>
+            <motion.h1
+              className="text-6xl md:text-8xl lg:text-9xl font-display text-white mb-4"
+              style={{
+                textShadow: '0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.3)',
+                lineHeight: '1.1',
+              }}
+            >
+              <motion.span
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="block mb-2"
+              >
+                Master the Art
+              </motion.span>
+              <motion.span
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="block mb-2 bg-gradient-to-r from-yellow-200 via-white to-yellow-200 bg-clip-text text-transparent animate-shimmer"
+                style={{
+                  backgroundSize: '200% auto',
+                }}
+              >
+                of Minecraft Farms
+              </motion.span>
+            </motion.h1>
+            <motion.div
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: '100%' }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className="h-2 bg-gradient-to-r from-transparent via-white/50 to-transparent mx-auto max-w-2xl rounded-full"
+            ></motion.div>
+          </motion.div>
+          
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto"
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="text-xl md:text-2xl lg:text-3xl text-white/95 mb-8 max-w-4xl mx-auto font-semibold leading-relaxed"
+            style={{
+              textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            }}
           >
-            The ultimate collection of Minecraft farms for every version and platform.
-            Find the perfect design or share your own creation with the community.
+            Discover thousands of farm designs, share your creations, and become a farming legend.
+            <br />
+            <span className="text-yellow-200">Everything you need to build the perfect farm.</span>
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
