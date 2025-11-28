@@ -15,5 +15,6 @@ export default defineConfig({
     sourcemap: false,
   },
   // For GitHub Pages, use the repository name as base path
-  base: '/MineCraftFarms/',
+  // For local dev, use '/' 
+  base: process.env.NODE_ENV === 'production' ? '/MineCraftFarms/' : '/',
 });
