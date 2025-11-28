@@ -107,7 +107,7 @@ export default function Account({ user: initialUser }: AccountProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data: authData: auth, error: authError } = await supabase.auth.signUp({
+      const { data: auth, error: authError } = await supabase.auth.signUp({
         email: authData.email,
         password: authData.password,
       });
