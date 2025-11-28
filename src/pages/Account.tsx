@@ -85,14 +85,28 @@ export default function Account({ user: initialUser }: AccountProps) {
   };
 
   const handleDeleteFarm = async (farmId: string, farmTitle: string) => {
+    if (!user) return;
+
+    // Find the farm and verify ownership
+    const farm = myFarms.find((f) => f.id === farmId);
+    if (!farm) {
+      alert('Farm not found.');
+      return;
+    }
+
+    // Verify the user is the author
+    if (farm.author_id !== user.id) {
+      alert('You can only delete your own farms.');
+      return;
+    }
+
     if (!confirm(`Are you sure you want to delete "${farmTitle}"? This action cannot be undone.`)) {
       return;
     }
 
     try {
       // Delete associated images from storage if any
-      const farm = myFarms.find((f) => f.id === farmId);
-      if (farm && farm.images && farm.images.length > 0 && user) {
+      if (farm.images && farm.images.length > 0) {
         const imagePromises = farm.images.map(async (imageUrl: string) => {
           const urlParts = imageUrl.split('/');
           const fileName = urlParts[urlParts.length - 1];
