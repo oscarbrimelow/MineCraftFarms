@@ -49,9 +49,10 @@ export const BADGE_TYPES: Record<string, Badge> = {
 /**
  * Check and award badges based on user achievements
  */
-export async function checkAndAwardBadges(userId: string, supabase: any) {
+export async function checkAndAwardBadges(_userId: string, _supabase: any) {
   // This function would be called after significant actions
   // For now, badges can be awarded manually or through database triggers
   // In a production system, you'd want to check achievements and award badges here
+  // Parameters prefixed with _ to indicate they're intentionally unused for now
 }
 
