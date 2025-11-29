@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Youtube, Loader, Download, Edit2, Save, X, CheckCircle, AlertCircle, Play } from 'lucide-react';
 import Papa from 'papaparse';
 import { FARM_CATEGORIES } from '../lib/farmCategories';
+import { parseMaterialsFromText } from '../lib/materialParser';
+import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 
 interface VideoData {
   videoId: string;
@@ -98,6 +100,223 @@ export default function YouTubePlaylistImporter({ user: _user }: YouTubePlaylist
     return videos;
   };
 
+  const analyzeVideoWithPatterns = (video: VideoData): ExtractedFarmData => {
+    const text = `${video.title} ${video.description}`.toLowerCase();
+    
+    // Extract category from keywords
+    const categoryKeywords: Record<string, string[]> = {
+      'Iron Farm': ['iron', 'iron golem', 'golem'],
+      'Gold Farm': ['gold', 'piglins', 'zombified piglin'],
+      'Creeper Farm': ['creeper'],
+      'Skeleton Farm': ['skeleton'],
+      'Zombie Farm': ['zombie'],
+      'Spider Farm': ['spider'],
+      'Witch Farm': ['witch'],
+      'Guardian Farm': ['guardian'],
+      'Enderman Farm': ['enderman'],
+      'Slime Farm': ['slime'],
+      'Blaze Farm': ['blaze'],
+      'Ghast Farm': ['ghast'],
+      'Wither Skeleton Farm': ['wither skeleton'],
+      'Drowned Farm': ['drowned'],
+      'Phantom Farm': ['phantom'],
+      'Shulker Farm': ['shulker'],
+      'Raid Farm': ['raid', 'pillager'],
+      'HOTV Raid Farm': ['hero of the village', 'hotv'],
+      'Iron Farm': ['iron'],
+      'Gold Farm': ['gold'],
+      'Bamboo Farm': ['bamboo'],
+      'Sugar Cane Farm': ['sugar cane', 'sugarcane'],
+      'Cactus Farm': ['cactus'],
+      'Kelp Farm': ['kelp'],
+      'Wheat Farm': ['wheat'],
+      'Potato Farm': ['potato'],
+      'Carrot Farm': ['carrot'],
+      'Melon Farm': ['melon'],
+      'Pumpkin Farm': ['pumpkin'],
+      'Cocoa Bean Farm': ['cocoa'],
+      'Nether Tree': ['nether tree', 'crimson', 'warped'],
+      'Wood Farm': ['wood', 'tree farm'],
+      'Mob Farm': ['mob farm', 'general mob'],
+      'String Farm': ['string', 'cobweb'],
+      'Bone Meal Farm': ['bone meal', 'bonemeal'],
+      'Cobble Farm': ['cobble', 'cobblestone'],
+      'Sand Farm': ['sand'],
+      'Gravel Farm': ['gravel'],
+      'Clay Farm': ['clay'],
+      'Concrete Maker': ['concrete'],
+      'Honey Farm': ['honey', 'bee'],
+      'Wool Farm': ['wool', 'sheep'],
+      'Leather Farm': ['leather', 'cow'],
+      'Chicken Farm': ['chicken'],
+      'Cow Farm': ['cow'],
+      'Sheep Farm': ['sheep'],
+      'Pig Farm': ['pig'],
+      'Hoglin Farm': ['hoglin'],
+      'Turtle Farm': ['turtle', 'scute'],
+      'Scute Farm': ['scute'],
+    };
+
+    let detectedCategory = 'Mob Farm'; // Default
+    let bestMatch = 0;
+    
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
+      const matches = keywords.filter(keyword => text.includes(keyword)).length;
+      if (matches > bestMatch) {
+        bestMatch = matches;
+        detectedCategory = category;
+      }
+    }
+
+    // If no good match, try to find category in title
+    if (bestMatch === 0) {
+      for (const category of FARM_CATEGORIES) {
+        if (text.includes(category.toLowerCase().replace(/\s+/g, ' '))) {
+          detectedCategory = category;
+          break;
+        }
+      }
+    }
+
+    // Detect platform
+    const platforms: string[] = [];
+    if (text.includes('bedrock') || text.includes('pe ') || text.includes('pocket edition')) {
+      platforms.push('Bedrock');
+    }
+    if (text.includes('java') || text.includes('java edition') || platforms.length === 0) {
+      platforms.push('Java');
+    }
+
+    // Extract versions (look for patterns like "1.21", "1.20.6", "1.20", etc.)
+    const versionPattern = /(?:mc|minecraft|version|ver|v)[\s:]*(\d+\.\d+(?:\.\d+)?)/gi;
+    const versionMatches = [...text.matchAll(versionPattern)];
+    const versions = versionMatches
+      .map(m => m[1])
+      .filter((v, i, arr) => arr.indexOf(v) === i) // Remove duplicates
+      .slice(0, 5); // Limit to 5 versions
+    
+    if (versions.length === 0) {
+      versions.push('1.21'); // Default version
+    }
+
+    // Extract materials using the existing parser
+    const materialText = video.description;
+    const parsedMaterials = parseMaterialsFromText(materialText);
+    const materialsString = parsedMaterials.added
+      .map(m => `${m.count} ${m.name}`)
+      .join('; ');
+
+    // Extract farmable items (common items that farms produce)
+    const farmableItems: string[] = [];
+    const itemKeywords: Record<string, string[]> = {
+      'Iron Ingot': ['iron ingot', 'iron'],
+      'Gold Ingot': ['gold ingot', 'gold'],
+      'Gold Nugget': ['gold nugget'],
+      'String': ['string'],
+      'Gunpowder': ['gunpowder', 'tnt'],
+      'Bone': ['bone'],
+      'Arrow': ['arrow'],
+      'Rotten Flesh': ['rotten flesh', 'flesh'],
+      'Ender Pearl': ['ender pearl', 'pearl'],
+      'Slime Ball': ['slime ball', 'slime'],
+      'Blaze Rod': ['blaze rod'],
+      'Ghast Tear': ['ghast tear'],
+      'Wither Skeleton Skull': ['wither skeleton skull', 'wither skull'],
+      'Trident': ['trident'],
+      'Nautilus Shell': ['nautilus shell'],
+      'Prismarine Shard': ['prismarine shard'],
+      'Prismarine Crystals': ['prismarine crystals'],
+    };
+
+    for (const [item, keywords] of Object.entries(itemKeywords)) {
+      if (keywords.some(keyword => text.includes(keyword))) {
+        farmableItems.push(item);
+      }
+    }
+
+    // Extract tags
+    const tags: string[] = [];
+    if (text.includes('efficient') || text.includes('fast') || text.includes('best')) {
+      tags.push('efficient');
+    }
+    if (text.includes('simple') || text.includes('easy')) {
+      tags.push('simple');
+    }
+    if (text.includes('tutorial') || text.includes('guide')) {
+      tags.push('tutorial');
+    }
+    if (text.includes('automatic') || text.includes('afk')) {
+      tags.push('automatic');
+    }
+    if (text.includes('compact')) {
+      tags.push('compact');
+    }
+    if (detectedCategory.toLowerCase().includes('farm')) {
+      const categoryTag = detectedCategory.toLowerCase().replace(/\s+/g, '-');
+      tags.push(categoryTag);
+    }
+
+    // Extract estimated time (look for patterns like "30 minutes", "1 hour", "2h", etc.)
+    const timePattern = /(\d+)\s*(?:min|minute|hour|h|hr)/gi;
+    const timeMatch = text.match(timePattern);
+    let estimatedTime: number | undefined;
+    if (timeMatch) {
+      const timeStr = timeMatch[0];
+      const num = parseInt(timeStr);
+      if (timeStr.includes('hour') || timeStr.includes('h') || timeStr.includes('hr')) {
+        estimatedTime = num * 60;
+      } else {
+        estimatedTime = num;
+      }
+    }
+
+    // Extract biome requirements
+    const biomes = ['plains', 'desert', 'forest', 'jungle', 'swamp', 'ocean', 'nether', 'end', 'taiga', 'savanna', 'badlands', 'mushroom'];
+    let requiredBiome = '';
+    for (const biome of biomes) {
+      if (text.includes(biome)) {
+        requiredBiome = biome.charAt(0).toUpperCase() + biome.slice(1);
+        break;
+      }
+    }
+
+    // Extract drop rate (look for patterns like "3600/hour", "1000/h", etc.)
+    const dropRatePattern = /(\d+)\s*(?:\/|\s*per\s*)(?:hour|h|hr)/gi;
+    const dropRateMatch = text.match(dropRatePattern);
+    let dropRate = '';
+    if (dropRateMatch && farmableItems.length > 0) {
+      dropRate = `${farmableItems[0]}: ${dropRateMatch[0]}`;
+    }
+
+    // Determine if review is needed
+    const needsReview = 
+      !FARM_CATEGORIES.includes(detectedCategory) ||
+      materialsString.length === 0 ||
+      farmableItems.length === 0;
+
+    return {
+      title: video.title,
+      description: video.description.substring(0, 300) || 'Minecraft farm tutorial',
+      category: detectedCategory,
+      platform: platforms,
+      versions: versions,
+      video_url: video.url,
+      materials: materialsString,
+      optional_materials: '',
+      tags: tags,
+      farmable_items: farmableItems,
+      estimated_time: estimatedTime,
+      required_biome: requiredBiome,
+      farm_designer: video.channelTitle,
+      notes: '',
+      drop_rate_per_hour: dropRate,
+      confidence: needsReview ? 0.5 : 0.7,
+      needsReview: needsReview,
+      errors: needsReview ? ['Some fields may need manual review'] : undefined,
+    };
+  };
+
+  // Keep the old AI function for backward compatibility, but make it optional
   const analyzeVideoWithAI = async (video: VideoData): Promise<ExtractedFarmData> => {
     const prompt = `You are analyzing a Minecraft farm tutorial video. Extract structured data from the following video information:
 
@@ -237,10 +456,8 @@ Return ONLY the JSON object, nothing else.`;
       return;
     }
 
-    if (!openaiKey.trim()) {
-      setError('Please enter your OpenAI API key');
-      return;
-    }
+    // OpenAI key is now optional - we'll use pattern matching if not provided
+    const useAI = openaiKey.trim().length > 0;
 
     setError(null);
     setProcessing(true);
@@ -264,17 +481,22 @@ Return ONLY the JSON object, nothing else.`;
 
       for (let i = 0; i < fetchedVideos.length; i++) {
         const video = fetchedVideos[i];
-        setProgress({ 
-          current: i + 1, 
-          total: fetchedVideos.length, 
-          status: `Analyzing: ${video.title.substring(0, 50)}...` 
-        });
+      setProgress({ 
+        current: i + 1, 
+        total: fetchedVideos.length, 
+        status: `Analyzing: ${video.title.substring(0, 50)}...` 
+      });
 
-        const farmData = await analyzeVideoWithAI(video);
+        let farmData: ExtractedFarmData;
+        if (useAI) {
+          farmData = await analyzeVideoWithAI(video);
+        } else {
+          farmData = analyzeVideoWithPatterns(video);
+        }
         farms.push(farmData);
 
-        // Small delay to avoid rate limiting
-        if (i < fetchedVideos.length - 1) {
+        // Small delay to avoid rate limiting (only for AI)
+        if (useAI && i < fetchedVideos.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
@@ -354,7 +576,7 @@ Return ONLY the JSON object, nothing else.`;
           <span>YouTube Playlist Importer</span>
         </h2>
         <p className="text-gray-600 mb-6">
-          Import farms from a YouTube playlist. The AI will analyze each video and extract farm data automatically.
+          Import farms from a YouTube playlist. Uses pattern-based extraction (free) or AI analysis (optional) to extract farm data automatically.
         </p>
 
         {/* API Keys Input */}
@@ -376,24 +598,25 @@ Return ONLY the JSON object, nothing else.`;
           </div>
           <div>
             <label className="block text-sm font-semibold mb-2">
-              OpenAI API Key <span className="text-red-600">*</span>
+              OpenAI API Key <span className="text-gray-500 text-xs">(Optional)</span>
             </label>
             <input
               type="password"
               value={openaiKey}
               onChange={(e) => setOpenaiKey(e.target.value)}
-              placeholder="sk-..."
+              placeholder="sk-... (leave empty for free pattern-based extraction)"
               className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-minecraft-green"
             />
             <p className="text-xs text-gray-500 mt-1">
-              Get it from{' '}
+              Optional: Leave empty to use free pattern-based extraction, or enter OpenAI key for AI-powered analysis.
+              <br />
               <a
                 href="https://platform.openai.com/api-keys"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-minecraft-green hover:underline"
               >
-                OpenAI Platform
+                Get OpenAI key
               </a>
             </p>
           </div>
@@ -415,7 +638,7 @@ Return ONLY the JSON object, nothing else.`;
             />
             <button
               onClick={handleProcessPlaylist}
-              disabled={processing || !playlistUrl.trim() || !apiKey.trim() || !openaiKey.trim()}
+              disabled={processing || !playlistUrl.trim() || !apiKey.trim()}
               className="px-6 py-2 bg-minecraft-green text-white rounded-lg hover:bg-minecraft-green-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-semibold"
             >
               {processing ? (
