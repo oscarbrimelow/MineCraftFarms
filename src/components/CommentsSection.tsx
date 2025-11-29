@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Edit3, Trash2, Flag, Reply } from 'lucide-react';
+import { Send, Edit3, Trash2, Flag, Reply, ThumbsUp, HelpCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, mockComments } from '../lib/demoData';
 import ReportModal from './ReportModal';
@@ -25,6 +26,11 @@ interface Comment {
     avatar_url: string | null;
   };
   replies?: Comment[];
+  reactions?: {
+    like: number;
+    helpful: number;
+    userReactions?: string[];
+  };
 }
 
 export default function CommentsSection({ farmId, user }: CommentsSectionProps) {
@@ -37,6 +43,7 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
   const [replyText, setReplyText] = useState('');
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [commentReactions, setCommentReactions] = useState<Record<string, { like: number; helpful: number; userReactions: string[] }>>({});
 
   useEffect(() => {
     fetchComments();
@@ -65,16 +72,69 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
 
       if (error) throw error;
 
-      // Fetch replies for each comment
+      // Fetch replies and reactions for each comment
       const commentsWithReplies = await Promise.all(
         (data || []).map(async (comment) => {
-          const { data: replies } = await supabase
-            .from('comments')
-            .select('*, users:user_id(username, avatar_url)')
-            .eq('parent_comment_id', comment.id)
-            .order('created_at', { ascending: true });
+          const [repliesResult, reactionsResult] = await Promise.all([
+            supabase
+              .from('comments')
+              .select('*, users:user_id(username, avatar_url)')
+              .eq('parent_comment_id', comment.id)
+              .order('created_at', { ascending: true }),
+            supabase
+              .from('comment_reactions')
+              .select('reaction_type, user_id')
+              .eq('comment_id', comment.id),
+          ]);
 
-          return { ...comment, replies: replies || [] };
+          const replies = repliesResult.data || [];
+          const reactions = reactionsResult.data || [];
+
+          // Count reactions
+          const likeCount = reactions.filter(r => r.reaction_type === 'like').length;
+          const helpfulCount = reactions.filter(r => r.reaction_type === 'helpful').length;
+          const userReactions = user
+            ? reactions.filter(r => r.user_id === user.id).map(r => r.reaction_type)
+            : [];
+
+          // Store reactions for this comment
+          setCommentReactions(prev => ({
+            ...prev,
+            [comment.id]: {
+              like: likeCount,
+              helpful: helpfulCount,
+              userReactions,
+            },
+          }));
+
+          // Fetch reactions for replies
+          const repliesWithReactions = await Promise.all(
+            replies.map(async (reply) => {
+              const { data: replyReactions } = await supabase
+                .from('comment_reactions')
+                .select('reaction_type, user_id')
+                .eq('comment_id', reply.id);
+
+              const replyLikeCount = replyReactions?.filter(r => r.reaction_type === 'like').length || 0;
+              const replyHelpfulCount = replyReactions?.filter(r => r.reaction_type === 'helpful').length || 0;
+              const replyUserReactions = user
+                ? replyReactions?.filter(r => r.user_id === user.id).map(r => r.reaction_type) || []
+                : [];
+
+              setCommentReactions(prev => ({
+                ...prev,
+                [reply.id]: {
+                  like: replyLikeCount,
+                  helpful: replyHelpfulCount,
+                  userReactions: replyUserReactions,
+                },
+              }));
+
+              return reply;
+            })
+          );
+
+          return { ...comment, replies: repliesWithReactions };
         })
       );
 
@@ -165,6 +225,67 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
     setShowReportModal(true);
   };
 
+  const handleReaction = async (commentId: string, reactionType: 'like' | 'helpful') => {
+    if (!user) {
+      alert('Please sign in to react to comments.');
+      return;
+    }
+
+    try {
+      const currentReactions = commentReactions[commentId] || { like: 0, helpful: 0, userReactions: [] };
+      const hasReaction = currentReactions.userReactions.includes(reactionType);
+
+      if (hasReaction) {
+        // Remove reaction
+        await supabase
+          .from('comment_reactions')
+          .delete()
+          .eq('comment_id', commentId)
+          .eq('user_id', user.id)
+          .eq('reaction_type', reactionType);
+
+        setCommentReactions(prev => ({
+          ...prev,
+          [commentId]: {
+            like: reactionType === 'like' ? currentReactions.like - 1 : currentReactions.like,
+            helpful: reactionType === 'helpful' ? currentReactions.helpful - 1 : currentReactions.helpful,
+            userReactions: currentReactions.userReactions.filter(r => r !== reactionType),
+          },
+        }));
+      } else {
+        // Add reaction (remove other reaction type if exists)
+        const otherType = reactionType === 'like' ? 'helpful' : 'like';
+        if (currentReactions.userReactions.includes(otherType)) {
+          await supabase
+            .from('comment_reactions')
+            .delete()
+            .eq('comment_id', commentId)
+            .eq('user_id', user.id)
+            .eq('reaction_type', otherType);
+        }
+
+        await supabase
+          .from('comment_reactions')
+          .insert({
+            comment_id: commentId,
+            user_id: user.id,
+            reaction_type: reactionType,
+          });
+
+        setCommentReactions(prev => ({
+          ...prev,
+          [commentId]: {
+            like: reactionType === 'like' ? currentReactions.like + 1 : (currentReactions.userReactions.includes('like') ? currentReactions.like - 1 : currentReactions.like),
+            helpful: reactionType === 'helpful' ? currentReactions.helpful + 1 : (currentReactions.userReactions.includes('helpful') ? currentReactions.helpful - 1 : currentReactions.helpful),
+            userReactions: [reactionType],
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-minecraft p-6">
       <h3 className="font-semibold text-gray-700 mb-4">Comments ({comments.length})</h3>
@@ -231,7 +352,12 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                   )}
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-semibold">{comment.users?.username || 'Unknown'}</span>
+                      <Link
+                        to={`/user/${comment.users?.username || 'unknown'}`}
+                        className="font-semibold hover:text-minecraft-green transition-colors"
+                      >
+                        {comment.users?.username || 'Unknown'}
+                      </Link>
                       <span className="text-sm text-gray-500">
                         {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
@@ -265,7 +391,32 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                     ) : (
                       <>
                         <p className="text-gray-700 whitespace-pre-wrap mb-2">{comment.body}</p>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-4 flex-wrap">
+                          {/* Reactions */}
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleReaction(comment.id, 'like')}
+                              className={`flex items-center space-x-1 text-sm px-2 py-1 rounded transition-colors ${
+                                commentReactions[comment.id]?.userReactions?.includes('like')
+                                  ? 'text-minecraft-green bg-minecraft-green/10'
+                                  : 'text-gray-600 hover:text-minecraft-green'
+                              }`}
+                            >
+                              <ThumbsUp size={14} />
+                              <span>{commentReactions[comment.id]?.like || 0}</span>
+                            </button>
+                            <button
+                              onClick={() => handleReaction(comment.id, 'helpful')}
+                              className={`flex items-center space-x-1 text-sm px-2 py-1 rounded transition-colors ${
+                                commentReactions[comment.id]?.userReactions?.includes('helpful')
+                                  ? 'text-blue-600 bg-blue-100'
+                                  : 'text-gray-600 hover:text-blue-600'
+                              }`}
+                            >
+                              <HelpCircle size={14} />
+                              <span>{commentReactions[comment.id]?.helpful || 0}</span>
+                            </button>
+                          </div>
                           {user && (
                             <button
                               onClick={() => {
@@ -360,9 +511,12 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                           ) : (
                             <>
                               <div className="flex items-center space-x-2 mb-1">
-                                <span className="font-semibold text-sm">
+                                <Link
+                                  to={`/user/${reply.users?.username || 'unknown'}`}
+                                  className="font-semibold text-sm hover:text-minecraft-green transition-colors"
+                                >
                                   {reply.users?.username || 'Unknown'}
-                                </span>
+                                </Link>
                                 <span className="text-xs text-gray-500">
                                   {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
                                 </span>
@@ -371,8 +525,33 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                                 )}
                               </div>
                               <p className="text-sm text-gray-700 whitespace-pre-wrap">{reply.body}</p>
-                              {user && (
-                                <div className="flex items-center space-x-3 mt-2">
+                              <div className="flex items-center space-x-3 mt-2 flex-wrap">
+                                {/* Reactions for replies */}
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => handleReaction(reply.id, 'like')}
+                                    className={`flex items-center space-x-1 text-xs px-2 py-1 rounded transition-colors ${
+                                      commentReactions[reply.id]?.userReactions?.includes('like')
+                                        ? 'text-minecraft-green bg-minecraft-green/10'
+                                        : 'text-gray-600 hover:text-minecraft-green'
+                                    }`}
+                                  >
+                                    <ThumbsUp size={12} />
+                                    <span>{commentReactions[reply.id]?.like || 0}</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handleReaction(reply.id, 'helpful')}
+                                    className={`flex items-center space-x-1 text-xs px-2 py-1 rounded transition-colors ${
+                                      commentReactions[reply.id]?.userReactions?.includes('helpful')
+                                        ? 'text-blue-600 bg-blue-100'
+                                        : 'text-gray-600 hover:text-blue-600'
+                                    }`}
+                                  >
+                                    <HelpCircle size={12} />
+                                    <span>{commentReactions[reply.id]?.helpful || 0}</span>
+                                  </button>
+                                </div>
+                                {user && (
                                   <button
                                     onClick={() => handleReport(reply.id)}
                                     className="flex items-center space-x-1 text-xs text-gray-600 hover:text-red-600"
@@ -380,6 +559,7 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                                     <Flag size={12} />
                                     <span>Report</span>
                                   </button>
+                                )}
                                   {user.id === reply.user_id && (
                                     <>
                                       <button
