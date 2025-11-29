@@ -21,6 +21,7 @@ import StepsEditor from '../components/StepsEditor';
 import ReportModal from '../components/ReportModal';
 import { getMinecraftMobAvatar, getYouTubeThumbnail, getYouTubeVideoId } from '../lib/avatarUtils';
 import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
+import { sanitizeYouTubeUrl, sanitizeImageUrl, sanitizeUrl, sanitizeYouTubeChannelUrl, escapeHtml } from '../lib/urlSanitizer';
 
 interface FarmDetailProps {
   user: SupabaseUser | null;
@@ -341,7 +342,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
               {farm.video_url ? (
                 <div className="aspect-video bg-gray-900">
                   <iframe
-                    src={farm.video_url.replace('watch?v=', 'embed/').split('&')[0]}
+                    src={sanitizeYouTubeUrl(farm.video_url) || ''}
                     className="w-full h-full"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -349,8 +350,8 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                 </div>
               ) : imageSrc ? (
                 <img
-                  src={imageSrc}
-                  alt={farm.title}
+                  src={sanitizeImageUrl(imageSrc) || ''}
+                  alt={escapeHtml(farm.title)}
                   className="w-full h-auto"
                   loading="eager"
                   onError={(e) => {
@@ -491,7 +492,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                     </div>
                   </div>
                   <a
-                    href={farm.schematic_url}
+                    href={sanitizeUrl(farm.schematic_url) || '#'}
                     download
                     className="px-6 py-3 bg-minecraft-green text-white rounded-lg font-semibold hover:bg-minecraft-green-dark transition-colors flex items-center space-x-2"
                   >
@@ -514,8 +515,8 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                         <img
-                          src={getMinecraftItemIcon(material.name || material.item)}
-                          alt={material.name || material.item}
+                          src={sanitizeImageUrl(getMinecraftItemIcon(material.name || material.item)) || ''}
+                          alt={escapeHtml(material.name || material.item)}
                           className="w-10 h-10 object-contain"
                           onError={(e) => {
                             // Fallback to emoji if image fails to load
@@ -558,8 +559,8 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                             <img
-                              src={getMinecraftItemIcon(material.name || material.item)}
-                              alt={material.name || material.item}
+                              src={sanitizeImageUrl(getMinecraftItemIcon(material.name || material.item)) || ''}
+                              alt={escapeHtml(material.name || material.item)}
                               className="w-10 h-10 object-contain"
                               onError={(e) => {
                                 // Fallback to emoji if image fails to load
@@ -603,8 +604,8 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                             className="flex items-center space-x-2 px-4 py-2 bg-blue-100 rounded-lg border-2 border-blue-200"
                           >
                             <img
-                              src={getMinecraftItemIcon(item)}
-                              alt={item}
+                              src={sanitizeImageUrl(getMinecraftItemIcon(item)) || ''}
+                              alt={escapeHtml(item)}
                               className="w-6 h-6 object-contain"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -628,8 +629,8 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                             className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border-2 border-green-200"
                           >
                             <img
-                              src={getMinecraftItemIcon(dropRate.item)}
-                              alt={dropRate.item}
+                              src={sanitizeImageUrl(getMinecraftItemIcon(dropRate.item)) || ''}
+                              alt={escapeHtml(dropRate.item)}
                               className="w-10 h-10 object-contain flex-shrink-0"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -705,19 +706,19 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                 ) : youtubeCreator ? (
                   <div className="flex items-center space-x-3">
                     <img
-                      src={youtubeCreator.avatar}
-                      alt={youtubeCreator.name}
+                      src={sanitizeImageUrl(youtubeCreator.avatar) || ''}
+                      alt={escapeHtml(youtubeCreator.name)}
                       className="w-12 h-12 rounded-full object-cover border-2 border-red-200"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(youtubeCreator.name)}&background=FF0000&color=fff&bold=true&size=128`;
                       }}
                     />
                     <div className="flex-1">
-                      <div className="font-semibold">{youtubeCreator.name}</div>
+                      <div className="font-semibold">{escapeHtml(youtubeCreator.name)}</div>
                       <div className="text-sm text-gray-600">YouTube Creator</div>
                       {youtubeCreator.channelId && (
                         <a
-                          href={youtubeCreator.channelId.startsWith('http') ? youtubeCreator.channelId : `https://youtube.com/${youtubeCreator.channelId}`}
+                          href={sanitizeYouTubeChannelUrl(youtubeCreator.channelId) || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-red-600 hover:text-red-700 mt-1 inline-block"
@@ -747,8 +748,8 @@ export default function FarmDetail({ user }: FarmDetailProps) {
               <div className="flex items-center space-x-3">
                 {farm.users?.avatar_url ? (
                   <img
-                    src={farm.users.avatar_url}
-                    alt={farm.users.username}
+                    src={sanitizeImageUrl(farm.users.avatar_url) || ''}
+                    alt={escapeHtml(farm.users.username || '')}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (

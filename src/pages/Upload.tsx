@@ -10,6 +10,7 @@ import CategoryAutocomplete from '../components/CategoryAutocomplete';
 import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
 import { getYouTubeVideoId } from '../lib/avatarUtils';
+import { sanitizeImageUrl, sanitizeUrl, escapeHtml } from '../lib/urlSanitizer';
 
 interface UploadProps {
   user: SupabaseUser | null;
@@ -996,8 +997,8 @@ export default function Upload({ user }: UploadProps) {
                     <p className="text-sm font-bold text-gray-800 mb-3">Designed by:</p>
                     <div className="flex items-center space-x-4">
                       <img
-                        src={youtubeCreator.avatar}
-                        alt={youtubeCreator.name}
+                        src={sanitizeImageUrl(youtubeCreator.avatar) || ''}
+                        alt={escapeHtml(youtubeCreator.name)}
                         className="w-16 h-16 rounded-full border-4 border-white shadow-lg object-cover"
                         onError={(e) => {
                           // Fallback to avatar service if image fails
@@ -1005,7 +1006,7 @@ export default function Upload({ user }: UploadProps) {
                         }}
                       />
                       <div>
-                        <p className="font-bold text-lg text-gray-900">{youtubeCreator.name}</p>
+                        <p className="font-bold text-lg text-gray-900">{escapeHtml(youtubeCreator.name)}</p>
                         <p className="text-xs text-gray-600">YouTube Creator</p>
                       </div>
                     </div>
@@ -1039,7 +1040,7 @@ export default function Upload({ user }: UploadProps) {
                     <div className="mt-2 p-3 bg-green-50 rounded-lg border-2 border-green-200">
                       <p className="text-sm text-green-700 font-semibold mb-1">✓ Schematic uploaded</p>
                       <a
-                        href={formData.schematic_url}
+                        href={sanitizeUrl(formData.schematic_url) || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-green-600 hover:underline"
@@ -1076,7 +1077,7 @@ export default function Upload({ user }: UploadProps) {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {images.map((url, index) => (
                     <div key={index} className="relative group">
-                      <img src={url} alt={`Preview ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
+                      <img src={sanitizeImageUrl(url) || ''} alt={`Preview ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
                       <button
                         onClick={() => setImages(images.filter((_, i) => i !== index))}
                         className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1117,8 +1118,8 @@ export default function Upload({ user }: UploadProps) {
                         className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full"
                       >
                         <img
-                          src={getMinecraftItemIcon(item)}
-                          alt={item}
+                          src={sanitizeImageUrl(getMinecraftItemIcon(item)) || ''}
+                          alt={escapeHtml(item)}
                           className="w-5 h-5 object-contain"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
@@ -1172,8 +1173,8 @@ export default function Upload({ user }: UploadProps) {
                       >
                         <div className="flex items-center space-x-3">
                           <img
-                            src={getMinecraftItemIcon(dropRate.item)}
-                            alt={dropRate.item}
+                            src={sanitizeImageUrl(getMinecraftItemIcon(dropRate.item)) || ''}
+                            alt={escapeHtml(dropRate.item)}
                             className="w-8 h-8 object-contain"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none';
@@ -1280,8 +1281,8 @@ export default function Upload({ user }: UploadProps) {
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                             <img
-                              src={getMinecraftItemIcon(material.name)}
-                              alt={material.name}
+                              src={sanitizeImageUrl(getMinecraftItemIcon(material.name)) || ''}
+                              alt={escapeHtml(material.name)}
                               className="w-8 h-8 object-contain"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
@@ -1295,7 +1296,7 @@ export default function Upload({ user }: UploadProps) {
                             <span className="text-lg hidden">🧱</span>
                           </div>
                           <span>
-                            {material.name} x{material.count}
+                            {escapeHtml(material.name)} x{material.count}
                           </span>
                         </div>
                         <button
@@ -1341,8 +1342,8 @@ export default function Upload({ user }: UploadProps) {
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
                             <img
-                              src={getMinecraftItemIcon(material.name)}
-                              alt={material.name}
+                              src={sanitizeImageUrl(getMinecraftItemIcon(material.name)) || ''}
+                              alt={escapeHtml(material.name)}
                               className="w-8 h-8 object-contain"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
@@ -1356,7 +1357,7 @@ export default function Upload({ user }: UploadProps) {
                             <span className="text-lg hidden">✨</span>
                           </div>
                           <span>
-                            {material.name} x{material.count}
+                            {escapeHtml(material.name)} x{material.count}
                           </span>
                         </div>
                         <button
@@ -1457,15 +1458,15 @@ export default function Upload({ user }: UploadProps) {
                   {youtubeCreator && (
                     <div className="mb-2 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-center space-x-3">
                       <img
-                        src={youtubeCreator.avatar}
-                        alt={youtubeCreator.name}
+                        src={sanitizeImageUrl(youtubeCreator.avatar) || ''}
+                        alt={escapeHtml(youtubeCreator.name)}
                         className="w-10 h-10 rounded-full border-2 border-blue-300 object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(youtubeCreator.name)}&background=3b82f6&color=fff&size=128`;
                         }}
                       />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Designed by: {youtubeCreator.name}</p>
+                        <p className="text-sm font-medium text-gray-900">Designed by: {escapeHtml(youtubeCreator.name)}</p>
                         <p className="text-xs text-gray-600">Auto-detected from YouTube video</p>
                       </div>
                     </div>

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import FarmCard from '../components/FarmCard';
 import { getMinecraftMobAvatar } from '../lib/avatarUtils';
+import { sanitizeImageUrl, escapeHtml } from '../lib/urlSanitizer';
 
 interface AccountProps {
   user: SupabaseUser | null;
@@ -492,8 +493,8 @@ export default function Account({ user: initialUser }: AccountProps) {
           <div className="flex items-center space-x-6 mb-6">
             {profileData.avatar_url ? (
               <img
-                src={profileData.avatar_url}
-                alt={profileData.username}
+                src={sanitizeImageUrl(profileData.avatar_url) || ''}
+                alt={escapeHtml(profileData.username)}
                 className="w-24 h-24 rounded-full border-4 border-minecraft-green object-cover"
               />
             ) : (
@@ -535,7 +536,7 @@ export default function Account({ user: initialUser }: AccountProps) {
                     <div className="flex items-center space-x-4">
                       {profileData.avatar_url ? (
                         <img
-                          src={profileData.avatar_url}
+                          src={sanitizeImageUrl(profileData.avatar_url) || ''}
                           alt="Avatar preview"
                           className="w-16 h-16 rounded-full object-cover border-2 border-minecraft-green"
                         />

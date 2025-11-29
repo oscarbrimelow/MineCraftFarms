@@ -7,23 +7,41 @@
   <script>
     // Single Page Apps for GitHub Pages
     // https://github.com/rafgraph/spa-github-pages
-    var pathSegmentsToKeep = 1;
-
-    var l = window.location;
-    l.replace(
-      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-      l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-      l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-      l.hash
-    );
+    // Security: Only allow redirects to same origin
+    (function() {
+      var pathSegmentsToKeep = 1;
+      var l = window.location;
+      
+      // Validate that we're only redirecting within the same origin
+      var currentOrigin = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '');
+      var targetPath = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash;
+      
+      // Only redirect if the target is within the same origin
+      var targetUrl = currentOrigin + targetPath;
+      if (targetUrl.startsWith(currentOrigin)) {
+        l.replace(targetUrl);
+      }
+    })();
   </script>
 </head>
 <body>
   <div id="root"></div>
   <script>
     // Redirect to index.html which will load the correct assets
-    window.location.replace(window.location.pathname.split('/').slice(0, 2).join('/') + '/index.html' + window.location.search + window.location.hash);
+    // Security: Only allow redirects within the same origin
+    (function() {
+      var currentOrigin = window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+      var targetPath = window.location.pathname.split('/').slice(0, 2).join('/') + '/index.html' + window.location.search + window.location.hash;
+      var targetUrl = currentOrigin + targetPath;
+      
+      // Only redirect if the target is within the same origin
+      if (targetUrl.startsWith(currentOrigin)) {
+        window.location.replace(targetUrl);
+      }
+    })();
   </script>
 </body>
 </html>

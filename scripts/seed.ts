@@ -137,8 +137,14 @@ async function seed() {
   console.log('Starting seed...');
 
   // Create a test user if it doesn't exist
-  const testEmail = 'test@minecraftfarms.com';
-  const testPassword = 'testpassword123';
+  // Use environment variables for credentials (fallback to defaults for development only)
+  const testEmail = process.env.SEED_TEST_EMAIL || 'test@minecraftfarms.com';
+  const testPassword = process.env.SEED_TEST_PASSWORD || 'testpassword123';
+
+  // Warn if using default credentials
+  if (!process.env.SEED_TEST_EMAIL || !process.env.SEED_TEST_PASSWORD) {
+    console.warn('⚠️  WARNING: Using default test credentials. Set SEED_TEST_EMAIL and SEED_TEST_PASSWORD environment variables for production.');
+  }
 
   let testUserId: string;
 
@@ -168,9 +174,10 @@ async function seed() {
     testUserId = signUpData.user.id;
 
     // Update user profile
+    const testUsername = process.env.SEED_TEST_USERNAME || 'TestFarmer';
     await supabase
       .from('users')
-      .update({ username: 'TestFarmer', role: 'admin' })
+      .update({ username: testUsername, role: 'admin' })
       .eq('id', testUserId);
 
     console.log('Created test user');
@@ -207,7 +214,12 @@ async function seed() {
   }
 
   console.log('Seed complete!');
-  console.log(`Test account: ${testEmail} / ${testPassword}`);
+  if (process.env.SEED_TEST_EMAIL && process.env.SEED_TEST_PASSWORD) {
+    console.log(`Test account created: ${testEmail}`);
+  } else {
+    console.log(`Test account: ${testEmail} / ${testPassword}`);
+    console.log('⚠️  Set SEED_TEST_EMAIL and SEED_TEST_PASSWORD environment variables to use custom credentials.');
+  }
 }
 
 seed().catch(console.error);
