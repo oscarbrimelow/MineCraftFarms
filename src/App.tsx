@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import DemoBanner from './components/DemoBanner';
 import DonationBox from './components/DonationBox';
+import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import Browse from './pages/Browse';
 import FarmDetail from './pages/FarmDetail';
@@ -59,6 +60,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <ScrollToTop />
       {isDemoMode() && <DemoBanner />}
       <Navbar user={user} />
       <main className="flex-grow">
