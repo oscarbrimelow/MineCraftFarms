@@ -168,3 +168,16 @@ export function escapeHtml(text: string | null | undefined): string {
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
+/**
+ * Decodes HTML entities to display text correctly
+ * @param text - The text with HTML entities
+ * @returns The decoded text
+ */
+export function decodeHtmlEntities(text: string | null | undefined): string {
+  if (!text || typeof text !== 'string') return '';
+  
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+

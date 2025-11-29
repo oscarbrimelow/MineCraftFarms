@@ -70,23 +70,28 @@ export default function DonationBox({
           className={`fixed ${positionClasses[position]} z-50 ${isMinimized ? 'max-w-xs' : 'max-w-sm'} w-full`}
         >
           <div className="bg-white rounded-xl shadow-2xl border-2 border-pink-300 overflow-hidden">
-            {/* Header */}
-            <div className={`bg-gradient-to-r from-pink-500 to-pink-600 ${isMinimized ? 'p-2' : 'p-4'} flex items-center justify-between`}>
+            {/* Header - Fully clickable to expand */}
+            <div 
+              onClick={() => setIsMinimized(!isMinimized)}
+              className={`bg-gradient-to-r from-pink-500 to-pink-600 ${isMinimized ? 'p-2' : 'p-4'} flex items-center justify-between cursor-pointer hover:from-pink-600 hover:to-pink-700 transition-colors`}
+            >
               <div className="flex items-center space-x-2">
                 <Heart className="text-white" size={isMinimized ? 16 : 20} />
                 {!isMinimized && <h3 className="text-white font-bold text-sm">Support the Project</h3>}
                 {isMinimized && <h3 className="text-white font-bold text-xs">Support</h3>}
               </div>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setIsMinimized(!isMinimized)}
+                <span
                   className="text-white hover:text-gray-200 transition-colors text-xs"
                   title={isMinimized ? "Expand" : "Minimize"}
                 >
                   {isMinimized ? '↑' : '↓'}
-                </button>
+                </span>
                 <button
-                  onClick={handleDismiss}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDismiss();
+                  }}
                   className="text-white hover:text-gray-200 transition-colors"
                   title="Dismiss"
                 >

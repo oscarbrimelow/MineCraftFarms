@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getMinecraftMobAvatar } from '../lib/avatarUtils';
-import { sanitizeImageUrl, escapeHtml } from '../lib/urlSanitizer';
+import { sanitizeImageUrl, escapeHtml, decodeHtmlEntities } from '../lib/urlSanitizer';
 import FarmCard from '../components/FarmCard';
 import { UserPlus, UserMinus, Award, TrendingUp, Heart, Bookmark, Upload as UploadIcon } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -216,7 +216,7 @@ export default function UserProfile({ currentUser }: UserProfileProps) {
                 )}
               </div>
               {profileUser.bio && (
-                <p className="text-gray-600 mb-4">{escapeHtml(profileUser.bio)}</p>
+                <p className="text-gray-600 mb-4">{decodeHtmlEntities(profileUser.bio)}</p>
               )}
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 <div className="flex items-center space-x-1">

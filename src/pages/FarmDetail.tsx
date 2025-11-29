@@ -12,9 +12,6 @@ import {
   Trash2,
   Download,
   Bookmark,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
@@ -25,7 +22,7 @@ import StepsEditor from '../components/StepsEditor';
 import ReportModal from '../components/ReportModal';
 import { getMinecraftMobAvatar, getYouTubeThumbnail, getYouTubeVideoId } from '../lib/avatarUtils';
 import { getMinecraftItemIcon } from '../lib/minecraftItemIcons';
-import { sanitizeYouTubeUrl, sanitizeImageUrl, sanitizeUrl, sanitizeYouTubeChannelUrl, escapeHtml } from '../lib/urlSanitizer';
+import { sanitizeYouTubeUrl, sanitizeImageUrl, sanitizeUrl, sanitizeYouTubeChannelUrl, escapeHtml, decodeHtmlEntities } from '../lib/urlSanitizer';
 
 interface FarmDetailProps {
   user: SupabaseUser | null;
@@ -39,13 +36,6 @@ export default function FarmDetail({ user }: FarmDetailProps) {
   const [favorited, setFavorited] = useState(false);
   const [checkedMaterials, setCheckedMaterials] = useState<Set<number>>(new Set());
   const [shareCopied, setShareCopied] = useState(false);
-  const [userTest, setUserTest] = useState<any>(null);
-  const [showTestModal, setShowTestModal] = useState(false);
-  const [testData, setTestData] = useState({
-    test_result: 'works' as 'works' | 'works_with_issues' | 'does_not_work',
-    test_notes: '',
-    tested_version: '',
-  });
   const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
   const [loadingCreator, setLoadingCreator] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -59,7 +49,6 @@ export default function FarmDetail({ user }: FarmDetailProps) {
     if (farm && user) {
       checkUpvoted();
       checkFavorited();
-      checkUserTest();
     }
   }, [farm, user]);
 
@@ -130,25 +119,6 @@ export default function FarmDetail({ user }: FarmDetailProps) {
     setFavorited(!!data);
   };
 
-  const checkUserTest = async () => {
-    if (!user || !farm) return;
-    const { data } = await supabase
-      .from('farm_tests')
-      .select('*')
-      .eq('farm_id', farm.id)
-      .eq('user_id', user.id)
-      .single();
-
-    if (data) {
-      setUserTest(data);
-      setTestData({
-        test_result: data.test_result || 'works',
-        test_notes: data.test_notes || '',
-        tested_version: data.tested_version || '',
-      });
-    }
-  };
-
   const handleUpvote = async () => {
     if (!user) {
       navigate('/account');
@@ -206,43 +176,6 @@ export default function FarmDetail({ user }: FarmDetailProps) {
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
-    }
-  };
-
-  const handleTestSubmit = async () => {
-    if (!user || !farm) return;
-
-    try {
-      if (userTest) {
-        // Update existing test
-        await supabase
-          .from('farm_tests')
-          .update({
-            test_result: testData.test_result,
-            test_notes: testData.test_notes,
-            tested_version: testData.tested_version,
-          })
-          .eq('farm_id', farm.id)
-          .eq('user_id', user.id);
-      } else {
-        // Create new test
-        await supabase
-          .from('farm_tests')
-          .insert({
-            farm_id: farm.id,
-            user_id: user.id,
-            test_result: testData.test_result,
-            test_notes: testData.test_notes,
-            tested_version: testData.tested_version,
-            tested: true,
-          });
-      }
-
-      setShowTestModal(false);
-      checkUserTest();
-    } catch (error) {
-      console.error('Error submitting test:', error);
-      alert('Failed to submit test result. Please try again.');
     }
   };
 
@@ -562,6 +495,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                 <button
                   onClick={handleReport}
                   className="flex items-center space-x-2 px-6 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-colors"
+                  type="button"
                 >
                   <Flag size={20} />
                   <span>Report</span>
@@ -570,14 +504,15 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                   <>
                     <Link
                       to={`/upload?edit=${farm.id}`}
-                      className="flex items-center space-x-2 px-6 py-3 bg-minecraft-gold text-white rounded-xl font-semibold hover:bg-minecraft-gold-dark transition-colors"
+                      className="flex items-center justify-center space-x-2 px-6 py-3 bg-minecraft-gold text-white rounded-xl font-semibold hover:bg-minecraft-gold-dark transition-colors"
                     >
                       <Edit3 size={20} />
                       <span>Edit</span>
                     </Link>
                     <button
                       onClick={handleDelete}
-                      className="flex items-center space-x-2 px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
+                      className="flex items-center justify-center space-x-2 px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
+                      type="button"
                     >
                       <Trash2 size={20} />
                       <span>Delete</span>
@@ -625,57 +560,6 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                     <span>Download</span>
                   </a>
                 </div>
-              </div>
-            )}
-
-            {/* Community Testing */}
-            {user && (
-              <div className="bg-white rounded-xl shadow-minecraft p-6">
-                <h2 className="text-2xl font-bold mb-4">Community Testing</h2>
-                {userTest ? (
-                  <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200 mb-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      {userTest.test_result === 'works' && (
-                        <>
-                          <CheckCircle className="text-green-600" size={20} />
-                          <span className="font-semibold text-green-600">Works</span>
-                        </>
-                      )}
-                      {userTest.test_result === 'works_with_issues' && (
-                        <>
-                          <AlertCircle className="text-yellow-600" size={20} />
-                          <span className="font-semibold text-yellow-600">Works with Issues</span>
-                        </>
-                      )}
-                      {userTest.test_result === 'does_not_work' && (
-                        <>
-                          <XCircle className="text-red-600" size={20} />
-                          <span className="font-semibold text-red-600">Does Not Work</span>
-                        </>
-                      )}
-                    </div>
-                    {userTest.tested_version && (
-                      <div className="text-sm text-gray-600 mb-2">
-                        Tested on: {escapeHtml(userTest.tested_version)}
-                      </div>
-                    )}
-                    {userTest.test_notes && (
-                      <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                        {escapeHtml(userTest.test_notes)}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 mb-4">
-                    Help the community by testing this farm and sharing your results!
-                  </p>
-                )}
-                <button
-                  onClick={() => setShowTestModal(true)}
-                  className="px-6 py-3 bg-minecraft-indigo text-white rounded-lg font-semibold hover:bg-minecraft-indigo-dark transition-colors"
-                >
-                  {userTest ? 'Update Test Result' : 'Mark as Tested'}
-                </button>
               </div>
             )}
 
@@ -944,7 +828,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
                 </div>
               </Link>
               {farm.users?.bio && (
-                <p className="mt-4 text-sm text-gray-600">{escapeHtml(farm.users.bio)}</p>
+                <p className="mt-4 text-sm text-gray-600">{decodeHtmlEntities(farm.users.bio)}</p>
               )}
             </div>
 
@@ -987,104 +871,6 @@ export default function FarmDetail({ user }: FarmDetailProps) {
         itemId={farm?.id || ''}
         itemTitle={farm?.title}
       />
-
-      {/* Test Modal */}
-      {showTestModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-minecraft p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Test Farm</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block font-semibold mb-2">Test Result *</label>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      value="works"
-                      checked={testData.test_result === 'works'}
-                      onChange={(e) => setTestData({ ...testData, test_result: e.target.value as any })}
-                      className="w-4 h-4 text-minecraft-green"
-                    />
-                    <CheckCircle className="text-green-600" size={20} />
-                    <span>Works</span>
-                  </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      value="works_with_issues"
-                      checked={testData.test_result === 'works_with_issues'}
-                      onChange={(e) => setTestData({ ...testData, test_result: e.target.value as any })}
-                      className="w-4 h-4 text-minecraft-green"
-                    />
-                    <AlertCircle className="text-yellow-600" size={20} />
-                    <span>Works with Issues</span>
-                  </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      value="does_not_work"
-                      checked={testData.test_result === 'does_not_work'}
-                      onChange={(e) => setTestData({ ...testData, test_result: e.target.value as any })}
-                      className="w-4 h-4 text-minecraft-green"
-                    />
-                    <XCircle className="text-red-600" size={20} />
-                    <span>Does Not Work</span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="block font-semibold mb-2">Minecraft Version Tested</label>
-                <input
-                  type="text"
-                  value={testData.tested_version}
-                  onChange={(e) => setTestData({ ...testData, tested_version: e.target.value })}
-                  placeholder="e.g., 1.20.1"
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
-                />
-              </div>
-              <div>
-                <label className="block font-semibold mb-2">Test Notes (Optional)</label>
-                <textarea
-                  value={testData.test_notes}
-                  onChange={(e) => setTestData({ ...testData, test_notes: e.target.value })}
-                  placeholder="Share any issues, tips, or feedback about testing this farm..."
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green"
-                />
-              </div>
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleTestSubmit}
-                  className="px-6 py-3 bg-minecraft-green text-white rounded-lg font-semibold hover:bg-minecraft-green-dark transition-colors"
-                >
-                  Submit Test Result
-                </button>
-                <button
-                  onClick={() => {
-                    setShowTestModal(false);
-                    if (userTest) {
-                      setTestData({
-                        test_result: userTest.test_result || 'works',
-                        test_notes: userTest.test_notes || '',
-                        tested_version: userTest.tested_version || '',
-                      });
-                    } else {
-                      setTestData({
-                        test_result: 'works',
-                        test_notes: '',
-                        tested_version: '',
-                      });
-                    }
-                  }}
-                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
