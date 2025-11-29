@@ -552,37 +552,38 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                                   </button>
                                 </div>
                                 {user && (
-                                  <button
-                                    onClick={() => handleReport(reply.id)}
-                                    className="flex items-center space-x-1 text-xs text-gray-600 hover:text-red-600"
-                                  >
-                                    <Flag size={12} />
-                                    <span>Report</span>
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleReport(reply.id)}
+                                      className="flex items-center space-x-1 text-xs text-gray-600 hover:text-red-600"
+                                    >
+                                      <Flag size={12} />
+                                      <span>Report</span>
+                                    </button>
+                                    {user.id === reply.user_id && (
+                                      <>
+                                        <button
+                                          onClick={() => {
+                                            setEditingId(reply.id);
+                                            setEditText(reply.body);
+                                          }}
+                                          className="flex items-center space-x-1 text-xs text-gray-600 hover:text-minecraft-green"
+                                        >
+                                          <Edit3 size={12} />
+                                          <span>Edit</span>
+                                        </button>
+                                        <button
+                                          onClick={() => handleDelete(reply.id)}
+                                          className="flex items-center space-x-1 text-xs text-red-600 hover:text-red-700"
+                                        >
+                                          <Trash2 size={12} />
+                                          <span>Delete</span>
+                                        </button>
+                                      </>
+                                    )}
+                                  </>
                                 )}
-                                  {user.id === reply.user_id && (
-                                    <>
-                                      <button
-                                        onClick={() => {
-                                          setEditingId(reply.id);
-                                          setEditText(reply.body);
-                                        }}
-                                        className="flex items-center space-x-1 text-xs text-gray-600 hover:text-minecraft-green"
-                                      >
-                                        <Edit3 size={12} />
-                                        <span>Edit</span>
-                                      </button>
-                                      <button
-                                        onClick={() => handleDelete(reply.id)}
-                                        className="flex items-center space-x-1 text-xs text-red-600 hover:text-red-700"
-                                      >
-                                        <Trash2 size={12} />
-                                        <span>Delete</span>
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              )}
+                              </div>
                             </>
                           )}
                         </div>
