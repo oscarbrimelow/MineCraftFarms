@@ -254,7 +254,6 @@ Return ONLY the JSON object, nothing else.`;
 
       setProgress({ current: 0, total: 0, status: 'Fetching playlist videos...' });
       const fetchedVideos = await fetchPlaylistVideos(playlistId);
-      setVideos(fetchedVideos);
 
       if (fetchedVideos.length === 0) {
         throw new Error('No videos found in this playlist');
