@@ -4,7 +4,6 @@ import { Youtube, Loader, Download, Edit2, Save, X, CheckCircle, AlertCircle, Pl
 import Papa from 'papaparse';
 import { FARM_CATEGORIES } from '../lib/farmCategories';
 import { parseMaterialsFromText } from '../lib/materialParser';
-import { MINECRAFT_ITEMS } from '../lib/minecraftItems';
 
 interface VideoData {
   videoId: string;
@@ -51,7 +50,8 @@ export default function YouTubePlaylistImporter({ user: _user }: YouTubePlaylist
   const [error, setError] = useState<string | null>(null);
   // Default YouTube API key (can be overridden)
   const [apiKey, setApiKey] = useState('AIzaSyAyPevBnX9PkcFtqDdm_lJWvRkcOIPFXIA');
-  const [openaiKey, setOpenaiKey] = useState('');
+  const [aiProvider, setAiProvider] = useState<'gemini' | 'deepseek' | 'openai' | 'none'>('gemini');
+  const [aiApiKey, setAiApiKey] = useState('');
 
   const extractPlaylistId = (url: string): string | null => {
     const patterns = [
@@ -123,8 +123,6 @@ export default function YouTubePlaylistImporter({ user: _user }: YouTubePlaylist
       'Shulker Farm': ['shulker'],
       'Raid Farm': ['raid', 'pillager'],
       'HOTV Raid Farm': ['hero of the village', 'hotv'],
-      'Iron Farm': ['iron'],
-      'Gold Farm': ['gold'],
       'Bamboo Farm': ['bamboo'],
       'Sugar Cane Farm': ['sugar cane', 'sugarcane'],
       'Cactus Farm': ['cactus'],
@@ -316,8 +314,180 @@ export default function YouTubePlaylistImporter({ user: _user }: YouTubePlaylist
     };
   };
 
-  // Keep the old AI function for backward compatibility, but make it optional
   const analyzeVideoWithAI = async (video: VideoData): Promise<ExtractedFarmData> => {
+    if (!aiApiKey.trim()) {
+      // Fallback to pattern matching if no API key
+      return analyzeVideoWithPatterns(video);
+    }
+
+    const prompt = `You are analyzing a Minecraft farm tutorial video. Extract structured data from the following video information:
+
+Title: ${video.title}
+Description: ${video.description.substring(0, 2000)}
+Channel: ${video.channelTitle}
+
+Extract the following information and return ONLY valid JSON (no markdown, no code blocks):
+{
+  "title": "Farm title (use video title if appropriate, or create a descriptive title)",
+  "description": "Brief description of the farm (2-3 sentences)",
+  "category": "One of these exact categories: ${FARM_CATEGORIES.join(', ')}",
+  "platform": ["Java"] or ["Bedrock"] or ["Java", "Bedrock"] - determine from title/description,
+  "versions": ["1.21"] or similar - extract Minecraft version(s) mentioned,
+  "materials": "Simple text format like '64 Cobbled Deepslate; 32 Glass; 16 Hopper' - extract all materials with quantities",
+  "optional_materials": "Optional materials if mentioned, same format",
+  "tags": ["tag1", "tag2"] - relevant tags like "iron-farm", "mob-farm", "efficient",
+  "farmable_items": ["Item Name"] - what items does this farm produce,
+  "estimated_time": 120 - build time in minutes if mentioned,
+  "required_biome": "Biome name if specific biome required",
+  "farm_designer": "${video.channelTitle}" - the channel name,
+  "drop_rate_per_hour": "Item: 3600/hour" - if mentioned,
+  "notes": "Any important notes or requirements"
+}
+
+Rules:
+- If category is unclear, choose the closest match from the list
+- Platform must be "Java" or "Bedrock" or both
+- Versions should be in format like "1.21", "1.20.6"
+- Materials should be in simple text format: "quantity Item Name; quantity Item Name"
+- If information is missing, use null or empty string
+- Be accurate and only extract information that is clearly stated or implied
+
+Return ONLY the JSON object, nothing else.`;
+
+    try {
+      let extracted: any;
+
+      if (aiProvider === 'gemini') {
+        // Google Gemini API (free tier available)
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${aiApiKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 2000,
+            }
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'Gemini API failed');
+        }
+
+        const data = await response.json();
+        const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        
+        try {
+          extracted = JSON.parse(cleanedContent);
+        } catch (parseError) {
+          const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            extracted = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('Failed to parse Gemini response');
+          }
+        }
+      } else if (aiProvider === 'deepseek') {
+        // DeepSeek API (free tier available, OpenAI-compatible)
+        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiApiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a helpful assistant that extracts structured data from Minecraft farm tutorial videos. Always return valid JSON only.',
+              },
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            temperature: 0.3,
+            max_tokens: 2000,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'DeepSeek API failed');
+        }
+
+        const data = await response.json();
+        const content = data.choices[0]?.message?.content || '{}';
+        const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        
+        try {
+          extracted = JSON.parse(cleanedContent);
+        } catch (parseError) {
+          const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            extracted = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('Failed to parse DeepSeek response');
+          }
+        }
+      } else if (aiProvider === 'openai') {
+        // OpenAI API (paid, but most accurate)
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiApiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a helpful assistant that extracts structured data from Minecraft farm tutorial videos. Always return valid JSON only.',
+              },
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+            temperature: 0.3,
+            max_tokens: 2000,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'OpenAI API failed');
+        }
+
+        const data = await response.json();
+        const content = data.choices[0]?.message?.content || '{}';
+        const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        
+        try {
+          extracted = JSON.parse(cleanedContent);
+        } catch (parseError) {
+          const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            extracted = JSON.parse(jsonMatch[0]);
+          } else {
+            throw new Error('Failed to parse OpenAI response');
+          }
+        }
+      } else {
+        // Fallback to pattern matching
+        return analyzeVideoWithPatterns(video);
+      }
     const prompt = `You are analyzing a Minecraft farm tutorial video. Extract structured data from the following video information:
 
 Title: ${video.title}
@@ -456,8 +626,8 @@ Return ONLY the JSON object, nothing else.`;
       return;
     }
 
-    // OpenAI key is now optional - we'll use pattern matching if not provided
-    const useAI = openaiKey.trim().length > 0;
+    // AI is optional - we'll use pattern matching if not provided
+    const useAI = aiProvider !== 'none' && aiApiKey.trim().length > 0;
 
     setError(null);
     setProcessing(true);
@@ -576,11 +746,11 @@ Return ONLY the JSON object, nothing else.`;
           <span>YouTube Playlist Importer</span>
         </h2>
         <p className="text-gray-600 mb-6">
-          Import farms from a YouTube playlist. Uses pattern-based extraction (free) or AI analysis (optional) to extract farm data automatically.
+          Import farms from a YouTube playlist. Uses free pattern-based extraction by default, or choose an AI provider (Gemini/DeepSeek free, OpenAI paid) for more accurate results.
         </p>
 
         {/* API Keys Input */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="space-y-4 mb-6">
           <div>
             <label className="block text-sm font-semibold mb-2">
               YouTube Data API Key <span className="text-red-600">*</span>
@@ -596,30 +766,77 @@ Return ONLY the JSON object, nothing else.`;
               Default key is pre-filled. You can override it if needed.
             </p>
           </div>
+
           <div>
             <label className="block text-sm font-semibold mb-2">
-              OpenAI API Key <span className="text-gray-500 text-xs">(Optional)</span>
+              AI Provider <span className="text-gray-500 text-xs">(Optional - for better extraction)</span>
             </label>
-            <input
-              type="password"
-              value={openaiKey}
-              onChange={(e) => setOpenaiKey(e.target.value)}
-              placeholder="sk-... (leave empty for free pattern-based extraction)"
+            <select
+              value={aiProvider}
+              onChange={(e) => setAiProvider(e.target.value as any)}
               className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-minecraft-green"
-            />
+            >
+              <option value="none">None (Free Pattern-Based Extraction)</option>
+              <option value="gemini">Google Gemini (Free Tier Available)</option>
+              <option value="deepseek">DeepSeek (Free Tier Available)</option>
+              <option value="openai">OpenAI GPT-4o (Paid, Most Accurate)</option>
+            </select>
             <p className="text-xs text-gray-500 mt-1">
-              Optional: Leave empty to use free pattern-based extraction, or enter OpenAI key for AI-powered analysis.
-              <br />
-              <a
-                href="https://platform.openai.com/api-keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-minecraft-green hover:underline"
-              >
-                Get OpenAI key
-              </a>
+              {aiProvider === 'gemini' && (
+                <>Get free API key from{' '}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-minecraft-green hover:underline">
+                    Google AI Studio
+                  </a>
+                  {' '}(60 requests/minute free)
+                </>
+              )}
+              {aiProvider === 'deepseek' && (
+                <>Get free API key from{' '}
+                  <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer" className="text-minecraft-green hover:underline">
+                    DeepSeek Platform
+                  </a>
+                  {' '}(Free tier available)
+                </>
+              )}
+              {aiProvider === 'openai' && (
+                <>Get API key from{' '}
+                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-minecraft-green hover:underline">
+                    OpenAI Platform
+                  </a>
+                  {' '}(Paid service)
+                </>
+              )}
+              {aiProvider === 'none' && (
+                <>Using free pattern-based extraction. No API key needed, but results may be less accurate.
+                </>
+              )}
             </p>
           </div>
+
+          {aiProvider !== 'none' && (
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                {aiProvider === 'gemini' && 'Gemini API Key'}
+                {aiProvider === 'deepseek' && 'DeepSeek API Key'}
+                {aiProvider === 'openai' && 'OpenAI API Key'}
+                <span className="text-gray-500 text-xs"> (Optional)</span>
+              </label>
+              <input
+                type="password"
+                value={aiApiKey}
+                onChange={(e) => setAiApiKey(e.target.value)}
+                placeholder={
+                  aiProvider === 'gemini' ? 'Enter Gemini API key...' :
+                  aiProvider === 'deepseek' ? 'Enter DeepSeek API key...' :
+                  'sk-...'
+                }
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-minecraft-green"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Leave empty to use free pattern-based extraction instead.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Playlist URL Input */}
