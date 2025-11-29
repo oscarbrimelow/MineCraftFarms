@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Edit3, Trash2, Flag } from 'lucide-react';
+import { Send, Edit3, Trash2, Flag, Reply } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, mockComments } from '../lib/demoData';
@@ -33,6 +33,8 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
 
@@ -86,7 +88,10 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
 
   const handleSubmit = async (e: React.FormEvent, parentId: string | null = null) => {
     e.preventDefault();
-    if (!user || !newComment.trim()) return;
+    if (!user) return;
+    
+    const text = parentId ? replyText : newComment;
+    if (!text.trim()) return;
 
     try {
       const { error } = await supabase
@@ -94,12 +99,17 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
         .insert({
           farm_id: farmId,
           user_id: user.id,
-          body: newComment.trim(),
+          body: text.trim(),
           parent_comment_id: parentId,
         });
 
       if (error) throw error;
-      setNewComment('');
+      if (parentId) {
+        setReplyText('');
+        setReplyingToId(null);
+      } else {
+        setNewComment('');
+      }
       fetchComments();
     } catch (error) {
       console.error('Error posting comment:', error);
@@ -256,6 +266,18 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                       <>
                         <p className="text-gray-700 whitespace-pre-wrap mb-2">{comment.body}</p>
                         <div className="flex items-center space-x-4">
+                          {user && (
+                            <button
+                              onClick={() => {
+                                setReplyingToId(replyingToId === comment.id ? null : comment.id);
+                                setReplyText('');
+                              }}
+                              className="flex items-center space-x-1 text-sm text-gray-600 hover:text-minecraft-green"
+                            >
+                              <Reply size={14} />
+                              <span>{replyingToId === comment.id ? 'Cancel' : 'Reply'}</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => handleReport(comment.id)}
                             className="flex items-center space-x-1 text-sm text-gray-600 hover:text-red-600"
@@ -292,9 +314,14 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
 
                 {/* Replies */}
                 {comment.replies && comment.replies.length > 0 && (
-                  <div className="ml-13 mt-4 space-y-3 border-l-2 border-gray-200 pl-4">
+                  <div className="ml-13 mt-4 space-y-3 border-l-2 border-minecraft-green/30 pl-4">
                     {comment.replies.map((reply) => (
-                      <div key={reply.id} className="flex items-start space-x-3">
+                      <motion.div
+                        key={reply.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-start space-x-3 bg-gray-50 rounded-lg p-3"
+                      >
                         {reply.users?.avatar_url ? (
                           <img
                             src={reply.users.avatar_url}
@@ -307,44 +334,119 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
                           </div>
                         )}
                         <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <span className="font-semibold text-sm">
-                              {reply.users?.username || 'Unknown'}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-700">{reply.body}</p>
+                          {editingId === reply.id ? (
+                            <div>
+                              <textarea
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                className="w-full px-3 py-2 rounded-lg border-2 border-minecraft-green focus:outline-none mb-2 text-sm"
+                                rows={3}
+                              />
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleEdit(reply.id)}
+                                  className="px-3 py-1 bg-minecraft-green text-white rounded-lg text-xs hover:bg-minecraft-green-dark"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingId(null)}
+                                  className="px-3 py-1 bg-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-300"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="font-semibold text-sm">
+                                  {reply.users?.username || 'Unknown'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
+                                </span>
+                                {reply.edited_at && (
+                                  <span className="text-xs text-gray-400">(edited)</span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{reply.body}</p>
+                              {user && (
+                                <div className="flex items-center space-x-3 mt-2">
+                                  <button
+                                    onClick={() => handleReport(reply.id)}
+                                    className="flex items-center space-x-1 text-xs text-gray-600 hover:text-red-600"
+                                  >
+                                    <Flag size={12} />
+                                    <span>Report</span>
+                                  </button>
+                                  {user.id === reply.user_id && (
+                                    <>
+                                      <button
+                                        onClick={() => {
+                                          setEditingId(reply.id);
+                                          setEditText(reply.body);
+                                        }}
+                                        className="flex items-center space-x-1 text-xs text-gray-600 hover:text-minecraft-green"
+                                      >
+                                        <Edit3 size={12} />
+                                        <span>Edit</span>
+                                      </button>
+                                      <button
+                                        onClick={() => handleDelete(reply.id)}
+                                        className="flex items-center space-x-1 text-xs text-red-600 hover:text-red-700"
+                                      >
+                                        <Trash2 size={12} />
+                                        <span>Delete</span>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
 
                 {/* Reply Form */}
-                {user && (
-                  <form
+                {user && replyingToId === comment.id && (
+                  <motion.form
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
                     onSubmit={(e) => handleSubmit(e, comment.id)}
                     className="ml-13 mt-3"
                   >
                     <textarea
-                      placeholder="Reply..."
-                      className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-minecraft-green text-sm"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder={`Reply to ${comment.users?.username || 'this comment'}...`}
+                      className="w-full px-3 py-2 rounded-lg border-2 border-minecraft-green focus:outline-none focus:ring-2 focus:ring-minecraft-green text-sm"
                       rows={2}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.ctrlKey) {
-                          handleSubmit(e, comment.id);
-                        }
-                      }}
+                      autoFocus
                     />
-                    <button
-                      type="submit"
-                      className="mt-2 text-sm text-minecraft-green hover:underline"
-                    >
-                      Post Reply (Ctrl+Enter)
-                    </button>
-                  </form>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <button
+                        type="submit"
+                        className="px-4 py-1 bg-minecraft-green text-white rounded-lg text-sm hover:bg-minecraft-green-dark transition-colors"
+                      >
+                        Post Reply
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplyingToId(null);
+                          setReplyText('');
+                        }}
+                        className="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </motion.form>
                 )}
               </motion.div>
             ))}

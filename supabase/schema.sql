@@ -76,6 +76,14 @@ CREATE TABLE IF NOT EXISTS upvotes (
   PRIMARY KEY (farm_id, user_id)
 );
 
+-- Favorites/Bookmarks table
+CREATE TABLE IF NOT EXISTS favorites (
+  farm_id UUID NOT NULL REFERENCES farms(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (farm_id, user_id)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_farms_author ON farms(author_id);
 CREATE INDEX IF NOT EXISTS idx_farms_platform ON farms USING GIN(platform);
@@ -89,6 +97,8 @@ CREATE INDEX IF NOT EXISTS idx_comments_farm ON comments(farm_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent ON comments(parent_comment_id);
 CREATE INDEX IF NOT EXISTS idx_upvotes_user ON upvotes(user_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_farm ON favorites(farm_id);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status) WHERE status = 'pending';
 
 -- Function to update search vector
@@ -140,6 +150,7 @@ ALTER TABLE farms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE upvotes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
 CREATE POLICY "Users are viewable by everyone" ON users
@@ -185,6 +196,16 @@ CREATE POLICY "Authenticated users can insert upvotes" ON upvotes
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete own upvotes" ON upvotes
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Favorites policies
+CREATE POLICY "Users can view own favorites" ON favorites
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Authenticated users can insert favorites" ON favorites
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own favorites" ON favorites
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Reports policies

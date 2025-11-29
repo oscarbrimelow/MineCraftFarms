@@ -11,6 +11,7 @@ import {
   Edit3,
   Trash2,
   Download,
+  Bookmark,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '../lib/supabase';
@@ -32,6 +33,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
   const [farm, setFarm] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [upvoted, setUpvoted] = useState(false);
+  const [favorited, setFavorited] = useState(false);
   const [checkedMaterials, setCheckedMaterials] = useState<Set<number>>(new Set());
   const [shareCopied, setShareCopied] = useState(false);
   const [youtubeCreator, setYoutubeCreator] = useState<{ name: string; avatar: string; channelId: string } | null>(null);
@@ -46,6 +48,7 @@ export default function FarmDetail({ user }: FarmDetailProps) {
   useEffect(() => {
     if (farm && user) {
       checkUpvoted();
+      checkFavorited();
     }
   }, [farm, user]);
 
@@ -104,6 +107,18 @@ export default function FarmDetail({ user }: FarmDetailProps) {
     setUpvoted(!!data);
   };
 
+  const checkFavorited = async () => {
+    if (!user || !farm) return;
+    const { data } = await supabase
+      .from('favorites')
+      .select('*')
+      .eq('farm_id', farm.id)
+      .eq('user_id', user.id)
+      .single();
+
+    setFavorited(!!data);
+  };
+
   const handleUpvote = async () => {
     if (!user) {
       navigate('/account');
@@ -132,6 +147,35 @@ export default function FarmDetail({ user }: FarmDetailProps) {
       }
     } catch (error) {
       console.error('Error toggling upvote:', error);
+    }
+  };
+
+  const handleFavorite = async () => {
+    if (!user) {
+      navigate('/account');
+      return;
+    }
+
+    if (!farm) return;
+
+    try {
+      if (favorited) {
+        await supabase
+          .from('favorites')
+          .delete()
+          .eq('farm_id', farm.id)
+          .eq('user_id', user.id);
+
+        setFavorited(false);
+      } else {
+        await supabase
+          .from('favorites')
+          .insert({ farm_id: farm.id, user_id: user.id });
+
+        setFavorited(true);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -418,18 +462,32 @@ export default function FarmDetail({ user }: FarmDetailProps) {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleUpvote}
-                  className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all ${
+                  className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all w-full sm:w-auto ${
                     upvoted
                       ? 'bg-minecraft-green text-white shadow-minecraft-sm'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
+                  type="button"
                 >
                   <ThumbsUp size={20} fill={upvoted ? 'currentColor' : 'none'} />
                   <span>{farm.upvotes_count}</span>
                 </button>
                 <button
+                  onClick={handleFavorite}
+                  className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all ${
+                    favorited
+                      ? 'bg-minecraft-gold text-white shadow-minecraft-sm'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  type="button"
+                >
+                  <Bookmark size={20} fill={favorited ? 'currentColor' : 'none'} />
+                  <span>{favorited ? 'Saved' : 'Save'}</span>
+                </button>
+                <button
                   onClick={handleShare}
-                  className="flex items-center space-x-2 px-6 py-3 bg-minecraft-indigo text-white rounded-xl font-semibold hover:bg-minecraft-indigo-dark transition-colors"
+                  className="flex items-center justify-center space-x-2 px-6 py-3 bg-minecraft-indigo text-white rounded-xl font-semibold hover:bg-minecraft-indigo-dark transition-colors"
+                  type="button"
                 >
                   <Share2 size={20} />
                   <span>{shareCopied ? 'Copied!' : 'Share'}</span>

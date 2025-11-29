@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Upload, Heart, Edit3, Save, X, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Mail, Lock, Upload, Heart, Edit3, Save, X, Trash2, Image as ImageIcon, Bookmark } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import FarmCard from '../components/FarmCard';
@@ -17,7 +17,8 @@ export default function Account({ user: initialUser }: AccountProps) {
   const [loading, setLoading] = useState(false);
   const [myFarms, setMyFarms] = useState<any[]>([]);
   const [upvotedFarms, setUpvotedFarms] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'farms' | 'upvoted' | 'profile'>('farms');
+  const [favoritedFarms, setFavoritedFarms] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'farms' | 'upvoted' | 'favorites' | 'profile'>('farms');
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({
     username: '',
@@ -40,6 +41,7 @@ export default function Account({ user: initialUser }: AccountProps) {
       fetchUserData();
       fetchMyFarms();
       fetchUpvotedFarms();
+      fetchFavoritedFarms();
     }
   }, [user]);
 
@@ -160,6 +162,26 @@ export default function Account({ user: initialUser }: AccountProps) {
         .eq('public', true);
 
       setUpvotedFarms(data || []);
+    }
+  };
+
+  const fetchFavoritedFarms = async () => {
+    if (!user) return;
+    const { data: favorites } = await supabase
+      .from('favorites')
+      .select('farm_id')
+      .eq('user_id', user.id);
+
+    if (favorites && favorites.length > 0) {
+      const farmIds = favorites.map((f) => f.farm_id);
+      const { data } = await supabase
+        .from('farms')
+        .select('*, users:author_id(username, avatar_url)')
+        .in('id', farmIds)
+        .eq('public', true)
+        .order('created_at', { ascending: false });
+
+      setFavoritedFarms(data || []);
     }
   };
 
@@ -659,6 +681,17 @@ export default function Account({ user: initialUser }: AccountProps) {
             <Heart size={20} />
             <span>Upvoted ({upvotedFarms.length})</span>
           </button>
+          <button
+            onClick={() => setActiveTab('favorites')}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-colors ${
+              activeTab === 'favorites'
+                ? 'bg-minecraft-green text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <Bookmark size={20} />
+            <span>Favorites ({favoritedFarms.length})</span>
+          </button>
         </div>
 
         {/* Content */}
@@ -715,6 +748,23 @@ export default function Account({ user: initialUser }: AccountProps) {
             ) : (
               <div className="text-center py-12 bg-white rounded-xl shadow-minecraft">
                 <p className="text-gray-600 text-lg">You haven't upvoted any farms yet.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'favorites' && (
+          <div>
+            {favoritedFarms.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {favoritedFarms.map((farm, index) => (
+                  <FarmCard key={farm.id} farm={farm} index={index} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-xl shadow-minecraft">
+                <p className="text-gray-600 text-lg">You haven't saved any farms yet.</p>
+                <p className="text-gray-500 text-sm mt-2">Click the "Save" button on any farm to add it to your favorites.</p>
               </div>
             )}
           </div>
