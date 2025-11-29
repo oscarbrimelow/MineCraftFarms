@@ -194,7 +194,7 @@ export default function FarmCard({ farm, index = 0 }: FarmCardProps) {
                   src={farm.author.avatar_url}
                   alt={farm.author.username}
                   className="w-7 h-7 rounded-full object-cover ring-2 ring-minecraft-green/20"
-                  whileHover={{ scale: 1.1, ring: 2 }}
+                  whileHover={{ scale: 1.1 }}
                 />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-minecraft-green-light to-minecraft-indigo-light flex items-center justify-center text-lg ring-2 ring-minecraft-green/20">
