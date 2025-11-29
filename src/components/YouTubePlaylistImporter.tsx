@@ -39,11 +39,10 @@ interface YouTubePlaylistImporterProps {
   user: any;
 }
 
-export default function YouTubePlaylistImporter({ user }: YouTubePlaylistImporterProps) {
+export default function YouTubePlaylistImporter({ user: _user }: YouTubePlaylistImporterProps) {
   const [playlistUrl, setPlaylistUrl] = useState('');
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, status: '' });
-  const [videos, setVideos] = useState<VideoData[]>([]);
   const [extractedFarms, setExtractedFarms] = useState<ExtractedFarmData[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingFarm, setEditingFarm] = useState<ExtractedFarmData | null>(null);
@@ -69,15 +68,15 @@ export default function YouTubePlaylistImporter({ user }: YouTubePlaylistImporte
     let nextPageToken: string | undefined = undefined;
 
     do {
-      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
+      const url: string = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
       
-      const response = await fetch(url);
+      const response: Response = await fetch(url);
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData: any = await response.json();
         throw new Error(errorData.error?.message || 'Failed to fetch playlist');
       }
 
-      const data = await response.json();
+      const data: any = await response.json();
       
       for (const item of data.items || []) {
         if (item.snippet.resourceId.kind === 'youtube#video') {
@@ -245,7 +244,6 @@ Return ONLY the JSON object, nothing else.`;
 
     setError(null);
     setProcessing(true);
-    setVideos([]);
     setExtractedFarms([]);
 
     try {
