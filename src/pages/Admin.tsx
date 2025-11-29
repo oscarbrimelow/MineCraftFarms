@@ -9,11 +9,13 @@ import {
   AlertTriangle,
   Shield,
   MessageSquare,
-  Grid3x3
+  Grid3x3,
+  Youtube
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { formatDistanceToNow } from 'date-fns';
+import YouTubePlaylistImporter from '../components/YouTubePlaylistImporter';
 
 interface AdminProps {
   user: SupabaseUser | null;
@@ -68,7 +70,7 @@ interface CommentData {
 }
 
 export default function Admin({ user }: AdminProps) {
-  const [activeTab, setActiveTab] = useState<'reports' | 'users' | 'farms' | 'comments'>('reports');
+  const [activeTab, setActiveTab] = useState<'reports' | 'users' | 'farms' | 'comments' | 'youtube'>('reports');
   const [reports, setReports] = useState<Report[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [farms, setFarms] = useState<FarmData[]>([]);
@@ -120,6 +122,7 @@ export default function Admin({ user }: AdminProps) {
       } else if (activeTab === 'comments') {
         await fetchComments();
       }
+      // YouTube tab doesn't need to fetch data on mount
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -390,6 +393,17 @@ export default function Admin({ user }: AdminProps) {
             >
               <MessageSquare size={18} />
               <span>Comments ({comments.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('youtube')}
+              className={`px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 ${
+                activeTab === 'youtube'
+                  ? 'bg-red-100 text-red-700 border-2 border-red-300'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Youtube size={18} />
+              <span>YouTube Import</span>
             </button>
           </div>
 
@@ -673,6 +687,11 @@ export default function Admin({ user }: AdminProps) {
               </div>
             )}
           </div>
+        )}
+
+        {/* YouTube Import Tab */}
+        {activeTab === 'youtube' && (
+          <YouTubePlaylistImporter user={user} />
         )}
       </div>
     </div>
