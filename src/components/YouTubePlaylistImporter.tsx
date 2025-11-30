@@ -48,8 +48,8 @@ export default function YouTubePlaylistImporter({ user: _user }: YouTubePlaylist
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingFarm, setEditingFarm] = useState<ExtractedFarmData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Default YouTube API key (can be overridden)
-  const [apiKey, setApiKey] = useState('AIzaSyAyPevBnX9PkcFtqDdm_lJWvRkcOIPFXIA');
+  // Use environment variable or require user to enter API key (never hardcode)
+  const [apiKey, setApiKey] = useState(import.meta.env.VITE_YOUTUBE_API_KEY || '');
   const [aiProvider, setAiProvider] = useState<'gemini' | 'deepseek' | 'openai' | 'none'>('gemini');
   const [aiApiKey, setAiApiKey] = useState('');
 

@@ -217,8 +217,27 @@ export default function Account({ user: initialUser }: AccountProps) {
       return;
     }
 
+    // Security: Limit username length
+    if (authData.username.length > 30) {
+      alert('Username must be 30 characters or less');
+      return;
+    }
+
     if (!/^[a-zA-Z0-9_-]+$/.test(authData.username)) {
       alert('Username can only contain letters, numbers, underscores, and hyphens');
+      return;
+    }
+
+    // Security: Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(authData.email)) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    // Security: Validate password strength
+    if (authData.password.length < 8) {
+      alert('Password must be at least 8 characters long');
       return;
     }
 

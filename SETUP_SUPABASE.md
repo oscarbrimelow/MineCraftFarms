@@ -10,17 +10,17 @@ Go to your repository and add the following secrets:
 
    **Secret 1:**
    - Name: `VITE_SUPABASE_URL`
-   - Value: `https://bworwbuwytwnyoesuelg.supabase.co`
+   - Value: `YOUR_SUPABASE_PROJECT_URL` (Get from Supabase Dashboard > Settings > API)
 
    **Secret 2:**
    - Name: `VITE_SUPABASE_ANON_KEY`
-   - Value: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3b3J3YnV3eXR3bnlvZXN1ZWxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjY1NjEsImV4cCI6MjA3OTg0MjU2MX0.WzHtgurqaiGBXUiW590Zdm0_AhSZsy2kwSoOHPNdB8I`
+   - Value: `YOUR_SUPABASE_ANON_KEY` (Get from Supabase Dashboard > Settings > API)
 
 This allows GitHub Actions to build your site with Supabase credentials.
 
 ## ✅ Step 2: Run Database Schema
 
-1. Go to your Supabase project: https://supabase.com/dashboard/project/bworwbuwytwnyoesuelg
+1. Go to your Supabase project dashboard
 2. Navigate to **SQL Editor**
 3. Click **New Query**
 4. Copy the entire contents of `supabase/schema.sql`

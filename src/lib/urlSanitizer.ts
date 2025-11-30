@@ -172,12 +172,14 @@ export function escapeHtml(text: string | null | undefined): string {
  * Decodes HTML entities to display text correctly
  * @param text - The text with HTML entities
  * @returns The decoded text
+ * SECURITY: Uses DOMParser instead of innerHTML to prevent XSS
  */
 export function decodeHtmlEntities(text: string | null | undefined): string {
   if (!text || typeof text !== 'string') return '';
   
-  const textarea = document.createElement('textarea');
-  textarea.innerHTML = text;
-  return textarea.value;
+  // Use DOMParser instead of innerHTML to prevent XSS
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, 'text/html');
+  return doc.documentElement.textContent || doc.documentElement.innerText || '';
 }
 

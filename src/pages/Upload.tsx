@@ -812,20 +812,32 @@ export default function Upload({ user }: UploadProps) {
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) => {
+                      // Security: Limit title length
+                      const value = e.target.value.slice(0, 200);
+                      setFormData({ ...formData, title: value });
+                    }}
                     placeholder="e.g., Auto Sugarcane Farm"
+                    maxLength={200}
                     className="w-full px-4 py-3 rounded-lg border-2 border-minecraft-green focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                   />
+                  <p className="text-xs text-gray-500 mt-1">{formData.title.length}/200 characters</p>
                 </div>
                 <div>
                   <label className="block font-semibold mb-2">Description *</label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) => {
+                      // Security: Limit description length
+                      const value = e.target.value.slice(0, 5000);
+                      setFormData({ ...formData, description: value });
+                    }}
                     placeholder="Describe your farm, its features, and efficiency..."
                     rows={6}
+                    maxLength={5000}
                     className="w-full px-4 py-3 rounded-lg border-2 border-minecraft-green focus:outline-none focus:ring-2 focus:ring-minecraft-green"
                   />
+                  <p className="text-xs text-gray-500 mt-1">{formData.description.length}/5000 characters</p>
                 </div>
               </div>
             </div>

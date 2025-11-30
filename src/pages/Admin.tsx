@@ -96,16 +96,30 @@ export default function Admin({ user }: AdminProps) {
       return;
     }
 
-    const { data } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
 
-    if (data && data.role === 'admin') {
-      setUserRole('admin');
-    } else {
-      alert('You do not have permission to access this page. Admin access required.');
+      // Security: Verify on server-side and handle errors
+      if (error) {
+        console.error('Error checking user role:', error);
+        alert('Error verifying permissions. Please try again.');
+        window.location.href = '/';
+        return;
+      }
+
+      if (data && data.role === 'admin') {
+        setUserRole('admin');
+      } else {
+        alert('You do not have permission to access this page. Admin access required.');
+        window.location.href = '/';
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+      alert('Error verifying permissions. Please try again.');
       window.location.href = '/';
     }
   };

@@ -153,6 +153,16 @@ export default function CommentsSection({ farmId, user }: CommentsSectionProps) 
     const text = parentId ? replyText : newComment;
     if (!text.trim()) return;
 
+    // Security: Validate and limit comment length
+    const trimmedText = text.trim();
+    if (trimmedText.length > 5000) {
+      alert('Comment is too long. Maximum 5000 characters allowed.');
+      return;
+    }
+    if (trimmedText.length < 1) {
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('comments')
